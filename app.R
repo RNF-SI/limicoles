@@ -38,6 +38,7 @@ get_data <- function() {
   }
   
   limicoles$site <- factor(limicoles$site)
+  limicoles$site_fonctionnel_nom <- factor(limicoles$site_fonctionnel_nom)
   limicoles$cycle <- factor(limicoles$cycle)
   return(limicoles)
 }
@@ -58,51 +59,57 @@ ui <- dashboardPage(
   ## Sidebar content
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
-      menuItem("OkTest", tabName = "widgets", icon = icon("th"))
+      menuItem("Analyse globale", tabName = "dashboard", icon = icon("dashboard"),
+               pickerInput(
+                 inputId = "selection_sites", 
+                 choices = levels(limicoles$site),
+                 selected = levels(limicoles$site),
+                 multiple = TRUE,
+                 options = list(
+                   `actions-box` = TRUE,
+                   `deselect-all-text` = "Aucun site",
+                   `select-all-text` = "Tous les sites",
+                   `none-selected-text` = "Aucun site de sélectionné",
+                   `selected-text-format` = "count > 1",
+                   `count-selected-text` = "{0} site sur {1}"
+                 )),
+               pickerInput(
+                 inputId = "selection_cycles", 
+                 choices = levels(limicoles$cycle),
+                 selected = levels(limicoles$cycle),
+                 multiple = TRUE,
+                 options = list(
+                   `actions-box` = TRUE,
+                   `deselect-all-text` = "Aucun cycle",
+                   `select-all-text` = "Tous les cycles",
+                   `none-selected-text` = "Aucun cycle de sélectionné",
+                   `selected-text-format` = "count > 1",
+                   `count-selected-text` = "{0} cycle sur {1}"
+                 )),
+               menuSubItem("Boxs", tabName = "boxs"),
+               menuSubItem("Graphique", tabName = "occurence")
+               ),
+      menuItem("Analyse d'un site", tabName = "widgets", icon = icon("th"),
+               pickerInput(
+                 inputId = "selection_sites_fonctionnels", 
+                 label = "Site fonctionnel :",
+                 choices = levels(limicoles$site_fonctionnel_nom)
+                 ),
+               menuSubItem("blabla", tabName = "blabla"))
     )
   ),
   ## Body content
   dashboardBody(
-    fluidRow(
-      box(title = "Sélection des sites", status = "warning", solidHeader = TRUE, collapsible = TRUE,
-      pickerInput(
-        inputId = "selection_sites", 
-        choices = levels(limicoles$site),
-        selected = levels(limicoles$site),
-        multiple = TRUE,
-        options = list(
-          `actions-box` = TRUE,
-          `deselect-all-text` = "Aucun site",
-          `select-all-text` = "Tous les sites",
-          `none-selected-text` = "Aucun site de sélectionné",
-          `selected-text-format` = "count > 1",
-          `count-selected-text` = "{0} site sur {1}"
-        ))),
-      box(title = "Sélection des cycles", status = "warning", solidHeader = TRUE, collapsible = TRUE,
-          pickerInput(
-            inputId = "selection_cycles", 
-            choices = levels(limicoles$cycle),
-            selected = levels(limicoles$cycle),
-            multiple = TRUE,
-            options = list(
-              `actions-box` = TRUE,
-              `deselect-all-text` = "Aucun cycle",
-              `select-all-text` = "Tous les cycles",
-              `none-selected-text` = "Aucun cycle de sélectionné",
-              `selected-text-format` = "count > 1",
-              `count-selected-text` = "{0} cycle sur {1}"
-            ))),
-    ),
-    fluidRow(
-      # Dynamic valueBoxes
-      valueBoxOutput("siteBox"),
-      valueBoxOutput("visitBox"),
-      valueBoxOutput("obsBox")
-    ),
     tabItems(
+      tabItem(tabName = "boxs",
+              fluidRow(
+                # Dynamic valueBoxes
+                valueBoxOutput("siteBox"),
+                valueBoxOutput("visitBox"),
+                valueBoxOutput("obsBox")
+              )),
       # First tab content
-      tabItem(tabName = "dashboard",
+      tabItem(tabName = "occurence",
               fluidRow(
                 box(plotlyOutput("plot1", height = 250)),
                 
