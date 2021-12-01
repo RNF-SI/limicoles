@@ -24,8 +24,6 @@ check_for_update <- function() {
   dbGetQuery(con,"select max(GREATEST(meta_update_date, meta_create_date)) from gn_monitoring.t_base_visits")
 }
 
-# TEST
-
 # fonction d'import des données avec correction de l'encodage
 get_data <- function() {
   limicoles <- dbGetQuery(con,"select * from gn_monitoring.v_limicoles")
