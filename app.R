@@ -59,17 +59,19 @@ ui <- dashboardPage(
   ## Sidebar content
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Analyse globale", tabName = "dashboard", icon = icon("dashboard"),
+      menuItem("Analyse globale", 
+               tabName = "dashboard", 
+               icon = icon("dashboard"),
                pickerInput(
                  inputId = "selection_sites", 
-                 choices = levels(limicoles$site),
-                 selected = levels(limicoles$site),
+                 choices = levels(limicoles$site_fonctionnel_nom),
+                 selected = levels(limicoles$site_fonctionnel_nom),
                  multiple = TRUE,
                  options = list(
                    `actions-box` = TRUE,
                    `deselect-all-text` = "Aucun site",
-                   `select-all-text` = "Tous les sites",
-                   `none-selected-text` = "Aucun site de sélectionné",
+                   `select-all-text` = "Tous les sites fonctionnels",
+                   `none-selected-text` = "Aucun SF de sélectionné",
                    `selected-text-format` = "count > 1",
                    `count-selected-text` = "{0} site sur {1}"
                  )),
@@ -89,7 +91,9 @@ ui <- dashboardPage(
                menuSubItem("Boxs", tabName = "boxs"),
                menuSubItem("Graphique", tabName = "occurence")
                ),
-      menuItem("Analyse d'un site", tabName = "widgets", icon = icon("th"),
+      menuItem("Analyse d'un site", 
+               tabName = "widgets", 
+               icon = icon("th"),
                pickerInput(
                  inputId = "selection_sites_fonctionnels", 
                  label = "Site fonctionnel :",
