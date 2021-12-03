@@ -87,8 +87,8 @@ ui <- dashboardPage(
                    `none-selected-text` = "Aucun cycle de sélectionné",
                    `selected-text-format` = "count > 1",
                    `count-selected-text` = "{0} cycle sur {1}"
-                 ))
-               #menuSubItem("Boxs", tabName = "boxs"),
+                 )),
+               menuSubItem("Boxs", tabName = "boxs")
                #menuSubItem("Graphique", tabName = "occurence")
                ),
       menuItem("Analyse d'un site", 
@@ -105,7 +105,7 @@ ui <- dashboardPage(
   ## Body content
   dashboardBody(
     tabItems(
-      tabItem(tabName = "dashboard",
+      tabItem(tabName = "boxs",
               fluidRow(
                 # Dynamic valueBoxes
                 valueBoxOutput("soussiteBox"),
@@ -164,40 +164,40 @@ server <- function(input, output, session) {
   nb_sites <- reactive({
     #res <- dplyr::filter(data(), site %in% input$selection_sites)
     #res <- dplyr::filter(res, cycle %in% input$selection_cycles)
-    res <- dplyr::data() %>% filter(site_fonctionnel_nom %in% input$selection_SF) %>%
+    res <- data() %>% filter(site_fonctionnel_nom %in% input$selection_SF) %>%
       filter(cycle %in% input$selection_cycles)
-    n_distinct(site_fonctionnel_nom)
+    n_distinct(res$site)
   })
   
   output$soussiteBox <- renderValueBox({
     valueBox(
-      nb_sites(), "Sites", icon = icon("tree-deciduous", lib = "glyphicon"),
+      nb_sites(), "Sites", icon = icon("map-marked-alt", lib = "font-awesome"),
       color = "green"
     )
   })
   
   nb_visites <- reactive({
-    res <- dplyr::filter(data(), site %in% input$selection_sites)
+    res <- dplyr::filter(data(), site_fonctionnel_nom %in% input$selection_SF)
     res <- dplyr::filter(res, cycle %in% input$selection_cycles)
     n_distinct(res$id_visite)
   })
   
   output$visitBox <- renderValueBox({
     valueBox(
-      nb_visites(), "Visites", icon = icon("log-in", lib = "glyphicon"),
+      nb_visites(), "Visites", icon = icon("binoculars", lib = "font-awesome"),
       color = "purple"
     )
   })
   
   nb_observations <- reactive({
-    res <- dplyr::filter(data(), site %in% input$selection_sites)
+    res <- dplyr::filter(data(), site_fonctionnel_nom %in% input$selection_SF)
     res <- dplyr::filter(res, cycle %in% input$selection_cycles)
     nrow(res)
   })
   
   output$obsBox <- renderValueBox({
     valueBox(
-      nb_observations(), "Observations", icon = icon("search", lib = "glyphicon"),
+      nb_observations(), "Observations", icon = icon("kiwi-bird", lib = "font-awesome"),
       color = "red"
     )
   })
