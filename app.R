@@ -63,7 +63,7 @@ ui <- dashboardPage(
                tabName = "dashboard", 
                icon = icon("dashboard"),
                pickerInput(
-                 inputId = "selection_sites", 
+                 inputId = "selection_SF", 
                  choices = levels(limicoles$site_fonctionnel_nom),
                  selected = levels(limicoles$site_fonctionnel_nom),
                  multiple = TRUE,
@@ -87,9 +87,9 @@ ui <- dashboardPage(
                    `none-selected-text` = "Aucun cycle de sélectionné",
                    `selected-text-format` = "count > 1",
                    `count-selected-text` = "{0} cycle sur {1}"
-                 )),
-               menuSubItem("Boxs", tabName = "boxs"),
-               menuSubItem("Graphique", tabName = "occurence")
+                 ))
+               #menuSubItem("Boxs", tabName = "boxs"),
+               #menuSubItem("Graphique", tabName = "occurence")
                ),
       menuItem("Analyse d'un site", 
                tabName = "widgets", 
@@ -105,10 +105,10 @@ ui <- dashboardPage(
   ## Body content
   dashboardBody(
     tabItems(
-      tabItem(tabName = "boxs",
+      tabItem(tabName = "dashboard",
               fluidRow(
                 # Dynamic valueBoxes
-                valueBoxOutput("siteBox"),
+                valueBoxOutput("soussiteBox"),
                 valueBoxOutput("visitBox"),
                 valueBoxOutput("obsBox")
               )),
@@ -137,7 +137,7 @@ server <- function(input, output, session) {
                        valueFunc = get_data)
   
   filtered_data <- reactive({
-    res <- dplyr::filter(data(), site %in% input$selection_sites)
+    res <- dplyr::filter(data(), site_fonctionnel_nom %in% input$selection_SF)
     res <- dplyr::filter(res, cycle %in% input$selection_cycles)
     res
   })
@@ -162,12 +162,14 @@ server <- function(input, output, session) {
   })
   
   nb_sites <- reactive({
-    res <- dplyr::filter(data(), site %in% input$selection_sites)
-    res <- dplyr::filter(res, cycle %in% input$selection_cycles)
-    n_distinct(res$site)
+    #res <- dplyr::filter(data(), site %in% input$selection_sites)
+    #res <- dplyr::filter(res, cycle %in% input$selection_cycles)
+    res <- dplyr::data() %>% filter(site_fonctionnel_nom %in% input$selection_SF) %>%
+      filter(cycle %in% input$selection_cycles)
+    n_distinct(site_fonctionnel_nom)
   })
   
-  output$siteBox <- renderValueBox({
+  output$soussiteBox <- renderValueBox({
     valueBox(
       nb_sites(), "Sites", icon = icon("tree-deciduous", lib = "glyphicon"),
       color = "green"
