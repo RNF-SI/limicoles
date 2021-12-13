@@ -164,14 +164,14 @@ server <- function(input, output, session) {
   nb_sites <- reactive({
     #res <- dplyr::filter(data(), site %in% input$selection_sites)
     #res <- dplyr::filter(res, cycle %in% input$selection_cycles)
-    res <- data() %>% filter(site_fonctionnel_nom %in% input$selection_SF) %>%
+    res <- limicoles %>% filter(site_fonctionnel_nom %in% input$selection_SF) %>%
       filter(cycle %in% input$selection_cycles)
     n_distinct(res$site)
   })
   
   output$soussiteBox <- renderValueBox({
     valueBox(
-      nb_sites(), "Sites", icon = icon("map-marked-alt", lib = "font-awesome"),
+      nb_sites(), "Sous-sites fonctionnels", icon = icon("map-marked-alt", lib = "font-awesome"),
       color = "green"
     )
   })
