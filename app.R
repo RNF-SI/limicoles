@@ -129,6 +129,52 @@ ui <- dashboardPage(
   )
 )
 
+
+
+ui2 <- navbarPage("Limicoles côtiers",
+                  #Déf du premier onglet du shiny : l'analyse génrale tous SFs confondus
+                  tabPanel("Analyse générale",
+                           fluidRow(
+                             column(6,
+                                    pickerInput(
+                                      inputId = "selection_SF", 
+                                      choices = levels(limicoles$site_fonctionnel_nom),
+                                      selected = levels(limicoles$site_fonctionnel_nom),
+                                      multiple = TRUE,
+                                      options = list(
+                                        `actions-box` = TRUE,
+                                        `deselect-all-text` = "Aucun site",
+                                        `select-all-text` = "Tous les sites fonctionnels",
+                                        `none-selected-text` = "Aucun SF de sélectionné",
+                                        `selected-text-format` = "count > 1",
+                                        `count-selected-text` = "{0} site sur {1}"
+                                      ))),
+                             column(6,
+                                    pickerInput(
+                                      inputId = "selection_cycles", 
+                                      choices = levels(limicoles$cycle),
+                                      selected = levels(limicoles$cycle),
+                                      multiple = TRUE,
+                                      options = list(
+                                        `actions-box` = TRUE,
+                                        `deselect-all-text` = "Aucun cycle",
+                                        `select-all-text` = "Tous les cycles",
+                                        `none-selected-text` = "Aucun cycle de sélectionné",
+                                        `selected-text-format` = "count > 1",
+                                        `count-selected-text` = "{0} cycle sur {1}"
+                                      )))
+                           ),
+                           fluidRow(column(4,valueBoxOutput("soussiteBox")),
+                                    column(4,valueBoxOutput("visitBox")),
+                                    column(4,valueBoxOutput("obsBox"))
+                           ),
+                           fluidRow(column(12,plotlyOutput("plot1")))
+                           
+                  ),
+                  tabPanel("Analyse par SF")
+)
+
+
 server <- function(input, output, session) {
   
   #fonction de chargement des données toutes les 60s s'il y a eu des mises à jour 
@@ -206,4 +252,4 @@ server <- function(input, output, session) {
   session$onSessionEnded(close_connection)
 }
 
-shinyApp(ui, server)
+shinyApp(ui2, server)
