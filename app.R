@@ -133,6 +133,11 @@ ui <- dashboardPage(
 
 ui2 <- navbarPage("Limicoles côtiers",
                   #Déf du premier onglet du shiny : l'analyse génrale tous SFs confondus
+                  
+                  ###### Here : insert shinydashboard dependencies ######
+                  header = tagList(
+                    useShinydashboard()
+                  ),
                   tabPanel("Analyse générale",
                            fluidRow(
                              column(6,
@@ -218,7 +223,7 @@ server <- function(input, output, session) {
   output$soussiteBox <- renderValueBox({
     valueBox(
       nb_sites(), "Sous-sites fonctionnels", icon = icon("map-marked-alt", lib = "font-awesome"),
-      color = "green"
+      color = "green",width = 4
     )
   })
   
