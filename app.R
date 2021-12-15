@@ -140,8 +140,10 @@ ui2 <- navbarPage("Limicoles côtiers",
                   ),
                   tabPanel("Analyse générale",
                            fluidRow(
-                             column(6,
+                             column(8,
                                     pickerInput(
+                                      label = "Sélection des sites fonctionnels contributeurs de l'OPNL",
+                                      width = '100%',
                                       inputId = "selection_SF", 
                                       choices = levels(limicoles$site_fonctionnel_nom),
                                       selected = levels(limicoles$site_fonctionnel_nom),
@@ -154,9 +156,11 @@ ui2 <- navbarPage("Limicoles côtiers",
                                         `selected-text-format` = "count > 1",
                                         `count-selected-text` = "{0} site sur {1}"
                                       ))),
-                             column(6,
+                             column(4,
                                     pickerInput(
-                                      inputId = "selection_cycles", 
+                                      label = "Sélection des cycles annuels d'intérêt",
+                                      width = '100%',
+                                      inputId = "selection_cycles",
                                       choices = levels(limicoles$cycle),
                                       selected = levels(limicoles$cycle),
                                       multiple = TRUE,
@@ -169,7 +173,7 @@ ui2 <- navbarPage("Limicoles côtiers",
                                         `count-selected-text` = "{0} cycle sur {1}"
                                       )))
                            ),
-                           fluidRow(column(4,valueBoxOutput("soussiteBox")),
+                           fluidRow(column(4,valueBoxOutput("soussiteBox",width = NULL)),
                                     column(4,valueBoxOutput("visitBox")),
                                     column(4,valueBoxOutput("obsBox"))
                            ),
