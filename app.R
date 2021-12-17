@@ -58,81 +58,81 @@ close_connection <- function() {
 }
 
 # Definition de l'UI version dashboard (interface utilisateur)
-ui <- dashboardPage(
-  
-  dashboardHeader(title = "Limicoles Côtiers RNF"),
-  ## Sidebar content
-  dashboardSidebar(
-    sidebarMenu(
-      menuItem("Analyse globale", 
-               tabName = "dashboard", 
-               icon = icon("dashboard"),
-               pickerInput(
-                 inputId = "selection_SF", 
-                 choices = levels(limicoles$site_fonctionnel_nom),
-                 selected = levels(limicoles$site_fonctionnel_nom),
-                 multiple = TRUE,
-                 options = list(
-                   `actions-box` = TRUE,
-                   `deselect-all-text` = "Aucun site",
-                   `select-all-text` = "Tous les sites fonctionnels",
-                   `none-selected-text` = "Aucun SF de sélectionné",
-                   `selected-text-format` = "count > 1",
-                   `count-selected-text` = "{0} site sur {1}"
-                 )),
-               pickerInput(
-                 inputId = "selection_cycles", 
-                 choices = levels(limicoles$cycle),
-                 selected = levels(limicoles$cycle),
-                 multiple = TRUE,
-                 options = list(
-                   `actions-box` = TRUE,
-                   `deselect-all-text` = "Aucun cycle",
-                   `select-all-text` = "Tous les cycles",
-                   `none-selected-text` = "Aucun cycle de sélectionné",
-                   `selected-text-format` = "count > 1",
-                   `count-selected-text` = "{0} cycle sur {1}"
-                 )),
-               menuSubItem("Boxs", tabName = "boxs")
-               #menuSubItem("Graphique", tabName = "occurence")
-               ),
-      menuItem("Analyse d'un site", 
-               tabName = "widgets", 
-               icon = icon("th"),
-               pickerInput(
-                 inputId = "selection_sites_fonctionnels", 
-                 label = "Site fonctionnel :",
-                 choices = levels(limicoles$site_fonctionnel_nom)
-                 ),
-               menuSubItem("blabla", tabName = "blabla"))
-    )
-  ),
-  ## Body content
-  dashboardBody(
-    tabItems(
-      tabItem(tabName = "boxs",
-              fluidRow(
-                # Dynamic valueBoxes
-                valueBoxOutput("soussiteBox"),
-                valueBoxOutput("visitBox"),
-                valueBoxOutput("obsBox")
-              )),
-      # First tab content
-      tabItem(tabName = "occurence",
-              fluidRow(
-                box(plotlyOutput("plot1", height = 250)),
-                
-                box(plotOutput("plot2", height = 250))
-              )
-      ),
-      
-      # Second tab content
-      tabItem(tabName = "widgets",
-              h2("Widgets tab content")
-      )
-    )
-  )
-)
+#ui <- dashboardPage(
+#  
+#  dashboardHeader(title = "Limicoles Côtiers RNF"),
+#  ## Sidebar content
+#  dashboardSidebar(
+#    sidebarMenu(
+#      menuItem("Analyse globale", 
+#               tabName = "dashboard", 
+#               icon = icon("dashboard"),
+#               pickerInput(
+#                 inputId = "selection_SF", 
+#                 choices = levels(limicoles$site_fonctionnel_nom),
+#                 selected = levels(limicoles$site_fonctionnel_nom),
+#                 multiple = TRUE,
+#                 options = list(
+#                   `actions-box` = TRUE,
+#                   `deselect-all-text` = "Aucun site",
+#                   `select-all-text` = "Tous les sites fonctionnels",
+#                   `none-selected-text` = "Aucun SF de sélectionné",
+#                   `selected-text-format` = "count > 1",
+#                   `count-selected-text` = "{0} site sur {1}"
+#                 )),
+#               pickerInput(
+#                 inputId = "selection_cycles", 
+#                 choices = levels(limicoles$cycle),
+#                 selected = levels(limicoles$cycle),
+#                 multiple = TRUE,
+#                 options = list(
+#                   `actions-box` = TRUE,
+#                   `deselect-all-text` = "Aucun cycle",
+#                   `select-all-text` = "Tous les cycles",
+#                   `none-selected-text` = "Aucun cycle de sélectionné",
+#                   `selected-text-format` = "count > 1",
+#                   `count-selected-text` = "{0} cycle sur {1}"
+#                 )),
+#               menuSubItem("Boxs", tabName = "boxs")
+#               #menuSubItem("Graphique", tabName = "occurence")
+#               ),
+#      menuItem("Analyse d'un site", 
+#               tabName = "widgets", 
+#               icon = icon("th"),
+#               pickerInput(
+#                 inputId = "selection_sites_fonctionnels", 
+#                 label = "Site fonctionnel :",
+#                 choices = levels(limicoles$site_fonctionnel_nom)
+#                 ),
+#               menuSubItem("blabla", tabName = "blabla"))
+#    )
+#  ),
+#  ## Body content
+#  dashboardBody(
+#    tabItems(
+#      tabItem(tabName = "boxs",
+#              fluidRow(
+#                # Dynamic valueBoxes
+#                valueBoxOutput("soussiteBox"),
+#                valueBoxOutput("visitBox"),
+#                valueBoxOutput("obsBox")
+#              )),
+#      # First tab content
+#      tabItem(tabName = "occurence",
+#              fluidRow(
+#                box(plotlyOutput("plot1", height = 250)),
+#                
+#                box(plotOutput("plot2", height = 250))
+#              )
+#      ),
+#      
+#      # Second tab content
+#      tabItem(tabName = "widgets",
+#              h2("Widgets tab content")
+#      )
+#    )
+#  )
+#)
 
 
 
@@ -210,8 +210,10 @@ ui2 <- navbarPage("Limicoles côtiers",
                                            sep = "")
                              ),
                              mainPanel(tabsetPanel(
-                               tabPanel("Graphiques"),
-                               tabPanel("Données"),
+                               tabPanel("Graphiques",
+                                        fluidRow(column(12,plotlyOutput("pheno_mens")))),
+                               tabPanel("Données",
+                                        fluidRow(column(12,dataTableOutput("table")))),
                                tabPanel("Indicateurs")
                              ))
                            )))
@@ -241,13 +243,14 @@ server <- function(input, output, session) {
     ggplotly(g)
   })
   
-  output$plot2 <- renderPlot({
-    ggplot(filtered_data()) + aes(x = lubridate::floor_date(date_comptage, "week")) + 
-      geom_bar(fill="steelblue") +
-      geom_text(stat='count', aes(label=..count..), vjust=1.6, color="white", size=3.5) +
-      theme_minimal() +
-      labs(title="Nombre d'observations par semaine", 
-           x="", y = "Individus")
+  data_pheno <- reactive({
+    limicoles %>% filter(nom_vern == input$selection_esp) %>%
+      filter(site_fonctionnel_nom == input$selection_SF2) %>%
+      filter(annee >= input$range[1] & annee <= input$range[2])
+  })
+  
+  output$table <- renderDataTable({
+    data_pheno()
   })
   
   nb_sites <- reactive({
