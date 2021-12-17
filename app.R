@@ -40,6 +40,11 @@ get_data <- function() {
   limicoles$site <- factor(limicoles$site)
   limicoles$site_fonctionnel_nom <- factor(limicoles$site_fonctionnel_nom)
   limicoles$cycle <- factor(limicoles$cycle)
+  limicoles$nom_vern<-factor(limicoles$nom_vern)
+  limicoles$annee<-as.numeric(format(limicoles$date_comptage, format = "%Y"))
+  limicoles$mois<-as.numeric(format(limicoles$date_comptage, format = "%m"))
+  limicoles$jour<-as.numeric(format(limicoles$date_comptage, format = "%d"))
+  
   return(limicoles)
 }
 
@@ -52,7 +57,7 @@ close_connection <- function() {
   dbUnloadDriver(drv)
 }
 
-# Definition de l'UI (interface utilisateur)
+# Definition de l'UI version dashboard (interface utilisateur)
 ui <- dashboardPage(
   
   dashboardHeader(title = "Limicoles Côtiers RNF"),
@@ -174,13 +179,42 @@ ui2 <- navbarPage("Limicoles côtiers",
                                       )))
                            ),
                            fluidRow(column(4,valueBoxOutput("soussiteBox",width = NULL)),
-                                    column(4,valueBoxOutput("visitBox")),
-                                    column(4,valueBoxOutput("obsBox"))
+                                    column(4,valueBoxOutput("visitBox",width = NULL)),
+                                    column(4,valueBoxOutput("obsBox",width = NULL))
                            ),
                            fluidRow(column(12,plotlyOutput("plot1")))
                            
                   ),
-                  tabPanel("Analyse par SF")
+                  tabPanel("Analyse par SF",
+                           fluidPage(sidebarLayout(
+                             sidebarPanel(
+                               selectInput(label = "Sélectionner votre site fonctionnel d'intérêt",
+                                           inputId = "selection_SF2",
+                                           choices = levels(limicoles$site_fonctionnel_nom),
+                                           selected = NULL,
+                                           multiple = FALSE,
+                                           width = '100%'),
+                               selectInput(label = "Sélectionner une espèce",
+                                           inputId = "selection_esp",
+                                           choices = levels(limicoles$nom_vern),
+                                           selected = NULL,
+                                           multiple = FALSE,
+                                           width = '100%'),
+                               sliderInput(label = "Pas de temps voulu pour la phénologie mensuelle",
+                                           inputId = "range",
+                                           value = c(2007,max(unique(limicoles$annee))),
+                                           min = min(unique(limicoles$annee)),
+                                           max = max(unique(limicoles$annee)),
+                                           step = 1,
+                                           width = '100%',
+                                           sep = "")
+                             ),
+                             mainPanel(tabsetPanel(
+                               tabPanel("Graphiques"),
+                               tabPanel("Données"),
+                               tabPanel("Indicateurs")
+                             ))
+                           )))
 )
 
 
