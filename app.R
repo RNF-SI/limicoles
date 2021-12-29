@@ -207,7 +207,9 @@ ui2 <- navbarPage("Limicoles côtiers",
                                            max = max(unique(limicoles$annee)),
                                            step = 1,
                                            width = '100%',
-                                           sep = "")
+                                           sep = ""),
+                               checkboxGroupInput(label = "Sous-sites inclus dans le site fonctionnel",
+                                                  inputId = "sous_sites")
                              ),
                              mainPanel(tabsetPanel(
                                tabPanel("Graphiques",
@@ -222,8 +224,8 @@ ui2 <- navbarPage("Limicoles côtiers",
 
 server <- function(input, output, session) {
   
-  #fonction de chargement des données toutes les 60s s'il y a eu des mises à jour 
-  data <- reactivePoll(60000, session,
+#fonction de chargement des données toutes les 60s s'il y a eu des mises à jour 
+data <- reactivePoll(60000, session,
                        checkFunc = check_for_update,
                        valueFunc = get_data)
   
@@ -232,6 +234,14 @@ server <- function(input, output, session) {
     res <- dplyr::filter(res, cycle %in% input$selection_cycles)
     res
   })
+  
+  observe({
+    updateCheckboxGroupInput(session,
+                             inputId = "sous_sites",
+                             choices = unique((limicoles %>% filter(site_fonctionnel_nom == input$selection_SF2))$site),
+                             selected = unique((limicoles %>% filter(site_fonctionnel_nom == input$selection_SF2))$site)
+                             )
+    })
   
   output$plot1 <- renderPlotly({
     g <- ggplot(filtered_data()) + aes(x = lubridate::floor_date(date_comptage, "week")) + 
@@ -244,13 +254,20 @@ server <- function(input, output, session) {
   })
   
   data_pheno <- reactive({
-    limicoles %>% filter(nom_vern == input$selection_esp) %>%
+    t1 <- limicoles %>% filter(nom_vern == input$selection_esp) %>%
       filter(site_fonctionnel_nom == input$selection_SF2) %>%
-      filter(annee >= input$range[1] & annee <= input$range[2])
+      filter(annee >= input$range[1] & annee <= input$range[2]) #%>%
+#      filter(site %in% )
   })
   
   output$table <- renderDataTable({
     data_pheno()
+  })
+  
+  data_graphe_pheno <- reactive({
+    limicoles %>% filter(nom_vern == input$selection_esp) %>%
+      filter(site_fonctionnel_nom == input$selection_SF2) %>%
+      filter(annee >= input$range[1] & annee <= input$range[2]) 
   })
   
   nb_sites <- reactive({
