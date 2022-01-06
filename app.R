@@ -1,5 +1,5 @@
 #Chargement des packages et installation des packages manquants (pour une utilisation en local, pas sur le serveur)
-list.of.packages <- c("shiny", "RPostgreSQL", "tidyr", "tidyverse", "lubridate", "ggplot2", "DT", "shinyWidgets", "shinydashboard", "plotly")
+list.of.packages <- c("shiny", "RPostgreSQL", "tidyr", "tidyverse", "lubridate", "ggplot2", "DT", "shinyWidgets", "shinydashboard", "plotly","ggtext")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 as.vector(new.packages)
 if(length(new.packages)) install.packages(new.packages)
@@ -213,9 +213,16 @@ ui2 <- navbarPage("Limicoles côtiers",
                              ),
                              mainPanel(tabsetPanel(
                                tabPanel("Graphiques",
-                                        fluidRow(column(12,plotlyOutput("pheno_mens")))),
+                                        fluidRow(column(9,plotOutput("pheno_mens")),
+                                                 column(3,fluidRow(column(12,textOutput("textpheno")),
+                                                                   column(12,downloadBttn("DownloadPheno",
+                                                                                          label = "Télécharger la phénologie"))
+                                                                   )
+                                                        )
+                                                 )),
                                tabPanel("Données",
-                                        fluidRow(column(12,dataTableOutput("table")))),
+                                        fluidRow(column(12,dataTableOutput("table"))),
+                                        fluidRow(column(12,dataTableOutput("datapheno")))),
                                tabPanel("Indicateurs")
                              ))
                            )))
@@ -235,6 +242,7 @@ data <- reactivePoll(60000, session,
     res
   })
   
+  #Met à jour les sous-sites séléctionnés chaque fois que le site fonctionnel change
   observe({
     updateCheckboxGroupInput(session,
                              inputId = "sous_sites",
@@ -253,26 +261,110 @@ data <- reactivePoll(60000, session,
     ggplotly(g)
   })
   
+  #Filtrage des données brutes pour le site fonctionnel et les sous-sites sélectionnés
   data_pheno <- reactive({
-    t1 <- limicoles %>% filter(nom_vern == input$selection_esp) %>%
+    t1<-limicoles %>% filter(nom_vern == input$selection_esp) %>%
       filter(site_fonctionnel_nom == input$selection_SF2) %>%
-      filter(annee >= input$range[1] & annee <= input$range[2]) #%>%
-#      filter(site %in% )
+      filter(site %in% input$sous_sites) %>%
+      filter(annee >= input$range[1] & annee <= input$range[2]) %>%
+      select(nom_vern,effectif,site,comptage,date_comptage,cycle)
+    print(t1)
   })
   
+  #Affichage du tableau lié
   output$table <- renderDataTable({
     data_pheno()
   })
   
   data_graphe_pheno <- reactive({
-    limicoles %>% filter(nom_vern == input$selection_esp) %>%
+    #Tri du jeu de données complet selon tous les inputs utilisateur
+    t1<-limicoles %>% filter(nom_vern == input$selection_esp) %>%
       filter(site_fonctionnel_nom == input$selection_SF2) %>%
-      filter(annee >= input$range[1] & annee <= input$range[2]) 
+      filter(site %in% input$sous_sites) %>%
+      filter(annee >= input$range[1] & annee <= input$range[2])
+    
+    #Création du dataset pour le graphique, avec les moyennes et les sd par mois
+    ordremois<-c("Juil.","Aout","Sept.","Oct.","Nov.","Déc.","Jan.","Fév.","Mar.","Avr.","Mai","Juin") #ordre des mois voulus pour le graphique
+    t2<-t1 %>% group_by(annee,mois) %>%
+      summarise(Somme_annuelle=sum(effectif,na.rm = T)) %>%
+      as.data.frame() %>%
+      group_by(mois) %>%
+      summarize(Moyenne_effectif = mean(Somme_annuelle,na.rm=T),
+                sd_effectif = sd(Somme_annuelle,na.rm = T)) %>%
+      mutate(Mois = c("Jan.","Fév.","Mar.","Avr.","Mai","Juin","Juil.","Aout","Sept.","Oct.","Nov.","Déc.")) %>%
+      slice(match(ordremois, Mois)) %>%
+      mutate(across(where(is.numeric), round, 1)) %>%
+      as.data.frame()
+    
+    t2
   })
   
+  output$datapheno <- renderDataTable({
+    data_graphe_pheno()
+  })
+  
+  output$pheno_mens<-renderPlot({
+    ordremois<-c("Juil.","Aout","Sept.","Oct.","Nov.","Déc.","Jan.","Fév.","Mar.","Avr.","Mai","Juin") #ordre des mois voulus pour le graphique
+    title<-paste("<span style = 'font-size:12pt'><b>Effectifs moyens agrégés par mois pour les sous-sites séléctionnés - ",input$range[1]," à ",input$range[2],"</b><br>
+                 <span style = 'font-size:10pt'>",input$selection_SF2," - <b><em>",input$selection_esp,sep="")
+    
+    plot<-ggplot(data_graphe_pheno(),aes(x=Mois,y=Moyenne_effectif))+
+      geom_col(width = 0.7,
+               color="#990000",
+               fill="#990000",
+               alpha=0.7)+
+      scale_x_discrete(name="Mois",
+                       limits=ordremois,
+                       labels=c("Juil.","Aout","Sept.","Oct.","Nov.","Déc.","Jan.","Fév.","Mar.","Avr.","Mai","Juin"))+
+      geom_errorbar(aes(ymin=Moyenne_effectif, ymax=Moyenne_effectif+sd_effectif), 
+                    width=.2,
+                    position=position_dodge(.9))+
+      #geom_hline(aes(yintercept = seuil.inter, #placement de la ligne pour le seuil international
+      #               linetype=paste("Internat :",seuil.inter)),  #Titre de cette ligne pour la légende
+      #           colour = "darkred",
+      #           size=.5)+
+      #geom_hline(aes(yintercept = seuil.nat, #placement de la ligne pour le seuil national
+      #               linetype=paste("National : ",seuil.nat)), #Titre de cette ligne pour la légende
+      #           colour = "blue",
+      #           size=.5)+
+      #scale_linetype_manual(name = "Seuil 1%", #Nom du titre de la légende
+      #                      values = c(2,6),  #Définition du type de ligne pour les deux lignes. 2 c'est dashed, et 6 c'est dotdashed
+      #                      guide = guide_legend(override.aes = list(color = c("darkred", "blue"))))+ #On doit redéfinir les couleurs 
+      labs(title=title, 
+           x="Mois", 
+           y = "Effectifs moyens",
+           caption="© Observatoire Patrimoine Naturel Littoral - Volet 'Limicoles côtiers'. RNF-OFB, 2022")+
+      theme_minimal()+
+      theme(plot.title=element_textbox_simple(hjust=0.5,
+                                              halign = 0.5,
+                                              color="white",
+                                              minwidth = unit(1, "in"), # Largeur min et max de la boite autour du texte
+                                              maxwidth = unit(8, "in"),
+                                              padding = margin(2, 4, 2, 4), # Espaces entre le texte et les bord du cadre
+                                              margin = margin(0, 0, 5, 0), # Espaces entre les bords du cadre et les marges
+                                              fill="#990000",  # Couleur du fond
+                                              box.color = "black",  # Couleur des bords
+                                              r = unit(5, "pt"),  # Rayon d'arrondi des coins
+                                              linetype = 1),  #Type de ligne (trait plein, pointille, etc)),
+            plot.caption = element_text(size=7,face="italic"), #Déf de la forme du copyright
+            axis.text.x = element_text(angle=45))#,
+            #legend.position=c(0.85,0.85),
+            #legend.title=element_text(face="bold",hjust = 0.5),
+            #legend.box.background = element_rect(fill="white"),
+            #legend.key.width=unit(0.7,"cm")) #permet d'agrandir un peu le petites boites ou sont les figurés dans la légende
+    
+    plot
+    #ggplotly(plot)%>%layout(title = title)
+    })
+  
+  PhenoPlotname<-reactive({paste("PhenoMensAgg_",input$selection_SF2,"_",input$selection_esp,"_",input$range[1],".",input$range[2],".png")})
+  output$DownloadPheno <- downloadHandler(
+        file = PhenoPlotname() , # variable du nom
+        content = function(file) {
+          ggsave(output$pheno_mens(), filename = file)
+        })
+  
   nb_sites <- reactive({
-    #res <- dplyr::filter(data(), site %in% input$selection_sites)
-    #res <- dplyr::filter(res, cycle %in% input$selection_cycles)
     res <- limicoles %>% filter(site_fonctionnel_nom %in% input$selection_SF) %>%
       filter(cycle %in% input$selection_cycles)
     n_distinct(res$site)
