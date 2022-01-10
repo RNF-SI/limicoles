@@ -152,7 +152,7 @@ ui2 <- navbarPage("Limicoles côtiers",
                       #textpheno{
                         background-color: #b3b3e6 !important;
                         padding: 10px;
-                        margin: 15px;
+                        margin: 10px;
                         border-radius: 15px 30px 30px;
                         text-align: justify;
                         border: none;
@@ -419,7 +419,6 @@ data <- reactivePoll(60000, session,
     #legend.key.width=unit(0.7,"cm")) #permet d'agrandir un peu le petites boites ou sont les figurés dans la légende
     
     plot
-    #ggplotly(plot)%>%layout(title = title)
   })
   
   
@@ -440,11 +439,10 @@ data <- reactivePoll(60000, session,
         })
   
   output$textpheno<-renderText({
-    HTML(paste('<div class="shadowbox">',
-    "Ce graphique montre l'évolution de la fréquentation du site fonctionnels choisi <b>(",input$selection_SF2,")</b> par l'espèce sélectionnée
+    HTML(paste("Ce graphique montre l'évolution de la fréquentation du site fonctionnel choisi <b>(",input$selection_SF2,")</b> par l'espèce sélectionnée
     <b>(",input$selection_esp,")</b> au cours des mois de l'année centrés sur la période d'hivernage des limicoles. Les effectifs sont cumulés
-    entre pour tous les sous-sites séléctionnés, puis moyennés par mois.
-    <br>Le graphique est téléchargeable ci-dessous<br>  </div>",
+    pour tous les sous-sites séléctionnés, puis moyennés par mois. Les écart-types représentés permettent d'apprécier la variabilité inter-annuelle de effectifs.
+    <br>Le graphique est téléchargeable ci-dessous :",
           sep=""))
     })
   
