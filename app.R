@@ -51,6 +51,9 @@ get_data <- function() {
 #appel initial des données (nécessaire pour l'UI)
 limicoles <- get_data()
 
+#appel des tableau de données annexes stockées sur le serveur
+seuil.inter <- dbGetQuery(con,'select * from ann_limicoles."Seuils_internationaux"')
+
 # fonction de fermeture de connexion postgres
 close_connection <- function() {
   dbDisconnect(con)
@@ -143,6 +146,19 @@ ui2 <- navbarPage("Limicoles côtiers",
                   header = tagList(
                     useShinydashboard()
                   ),
+                  
+                  #### Insertion des tag CSS pour les éléments de l'UI #####
+                  tags$head(tags$style(HTML('
+                      #textpheno{
+                        background-color: #b3b3e6 !important;
+                        padding: 10px;
+                        margin: 15px;
+                        border-radius: 15px 30px 30px;
+                        text-align: justify;
+                        border: none;
+                        }'))),
+                  
+                  
                   tabPanel("Analyse générale",
                            fluidRow(
                              column(8,
@@ -214,7 +230,7 @@ ui2 <- navbarPage("Limicoles côtiers",
                              mainPanel(tabsetPanel(
                                tabPanel("Graphiques",
                                         fluidRow(column(9,plotOutput("pheno_mens")),
-                                                 column(3,fluidRow(column(12,textOutput("textpheno")),
+                                                 column(3,fluidRow(column(12,htmlOutput("textpheno")),
                                                                    column(12,downloadBttn("DownloadPheno",
                                                                                           label = "Télécharger la phénologie"))
                                                                    )
@@ -242,6 +258,8 @@ data <- reactivePoll(60000, session,
     res
   })
   
+  ################ Fonctions de mise à jour des inputs #######################
+  
   #Met à jour les sous-sites séléctionnés chaque fois que le site fonctionnel change
   observe({
     updateCheckboxGroupInput(session,
@@ -250,6 +268,10 @@ data <- reactivePoll(60000, session,
                              selected = unique((limicoles %>% filter(site_fonctionnel_nom == input$selection_SF2))$site)
                              )
     })
+  
+  
+  
+  ############### Panel d'analyse générale #######################
   
   output$plot1 <- renderPlotly({
     g <- ggplot(filtered_data()) + aes(x = lubridate::floor_date(date_comptage, "week")) + 
@@ -260,6 +282,48 @@ data <- reactivePoll(60000, session,
            x="", y = "Individus")
     ggplotly(g)
   })
+  
+  nb_sites <- reactive({
+    res <- limicoles %>% filter(site_fonctionnel_nom %in% input$selection_SF) %>%
+      filter(cycle %in% input$selection_cycles)
+    n_distinct(res$site)
+  })
+  
+  output$soussiteBox <- renderValueBox({
+    valueBox(
+      nb_sites(), "Sous-sites fonctionnels", icon = icon("map-marked-alt", lib = "font-awesome"),
+      color = "green",width = 4
+    )
+  })
+  
+  nb_visites <- reactive({
+    res <- dplyr::filter(data(), site_fonctionnel_nom %in% input$selection_SF)
+    res <- dplyr::filter(res, cycle %in% input$selection_cycles)
+    n_distinct(res$id_visite)
+  })
+  
+  output$visitBox <- renderValueBox({
+    valueBox(
+      nb_visites(), "Visites", icon = icon("binoculars", lib = "font-awesome"),
+      color = "purple"
+    )
+  })
+  
+  nb_observations <- reactive({
+    res <- dplyr::filter(data(), site_fonctionnel_nom %in% input$selection_SF)
+    res <- dplyr::filter(res, cycle %in% input$selection_cycles)
+    nrow(res)
+  })
+  
+  output$obsBox <- renderValueBox({
+    valueBox(
+      nb_observations(), "Observations", icon = icon("kiwi-bird", lib = "font-awesome"),
+      color = "red"
+    )
+  })
+  
+  
+  ############### Panel d'analyse par site fonctionnel #######################
   
   #Filtrage des données brutes pour le site fonctionnel et les sous-sites sélectionnés
   data_pheno <- reactive({
@@ -303,7 +367,8 @@ data <- reactivePoll(60000, session,
     data_graphe_pheno()
   })
   
-  output$pheno_mens<-renderPlot({
+  
+  plotPhenomens<-reactive({
     ordremois<-c("Juil.","Aout","Sept.","Oct.","Nov.","Déc.","Jan.","Fév.","Mar.","Avr.","Mai","Juin") #ordre des mois voulus pour le graphique
     title<-paste("<span style = 'font-size:12pt'><b>Effectifs moyens agrégés par mois pour les sous-sites séléctionnés - ",input$range[1]," à ",input$range[2],"</b><br>
                  <span style = 'font-size:10pt'>",input$selection_SF2," - <b><em>",input$selection_esp,sep="")
@@ -330,10 +395,10 @@ data <- reactivePoll(60000, session,
       #scale_linetype_manual(name = "Seuil 1%", #Nom du titre de la légende
       #                      values = c(2,6),  #Définition du type de ligne pour les deux lignes. 2 c'est dashed, et 6 c'est dotdashed
       #                      guide = guide_legend(override.aes = list(color = c("darkred", "blue"))))+ #On doit redéfinir les couleurs 
-      labs(title=title, 
-           x="Mois", 
-           y = "Effectifs moyens",
-           caption="© Observatoire Patrimoine Naturel Littoral - Volet 'Limicoles côtiers'. RNF-OFB, 2022")+
+    labs(title=title, 
+         x="Mois", 
+         y = "Effectifs moyens",
+         caption="© Observatoire Patrimoine Naturel Littoral - Volet 'Limicoles côtiers'. RNF-OFB, 2022")+
       theme_minimal()+
       theme(plot.title=element_textbox_simple(hjust=0.5,
                                               halign = 0.5,
@@ -348,60 +413,41 @@ data <- reactivePoll(60000, session,
                                               linetype = 1),  #Type de ligne (trait plein, pointille, etc)),
             plot.caption = element_text(size=7,face="italic"), #Déf de la forme du copyright
             axis.text.x = element_text(angle=45))#,
-            #legend.position=c(0.85,0.85),
-            #legend.title=element_text(face="bold",hjust = 0.5),
-            #legend.box.background = element_rect(fill="white"),
-            #legend.key.width=unit(0.7,"cm")) #permet d'agrandir un peu le petites boites ou sont les figurés dans la légende
+    #legend.position=c(0.85,0.85),
+    #legend.title=element_text(face="bold",hjust = 0.5),
+    #legend.box.background = element_rect(fill="white"),
+    #legend.key.width=unit(0.7,"cm")) #permet d'agrandir un peu le petites boites ou sont les figurés dans la légende
     
     plot
     #ggplotly(plot)%>%layout(title = title)
+  })
+  
+  
+  output$pheno_mens<-renderPlot({
+    plotPhenomens()
     })
   
-  PhenoPlotname<-reactive({paste("PhenoMensAgg_",input$selection_SF2,"_",input$selection_esp,"_",input$range[1],".",input$range[2],".png")})
   output$DownloadPheno <- downloadHandler(
-        file = PhenoPlotname() , # variable du nom
+        filename = function(){paste("PhenoMensAgg_",input$selection_SF2,"_",input$selection_esp,"_",input$range[1],".",input$range[2],".png",sep = "")} , # variable du nom
         content = function(file) {
-          ggsave(output$pheno_mens(), filename = file)
+          ggsave(file,
+                 plot= plotPhenomens(), 
+                 device = "png",
+                 dpi = 300,
+                 width = 18.5,
+                 height = 14,
+                 units = "cm")
         })
   
-  nb_sites <- reactive({
-    res <- limicoles %>% filter(site_fonctionnel_nom %in% input$selection_SF) %>%
-      filter(cycle %in% input$selection_cycles)
-    n_distinct(res$site)
-  })
+  output$textpheno<-renderText({
+    HTML(paste('<div class="shadowbox">',
+    "Ce graphique montre l'évolution de la fréquentation du site fonctionnels choisi <b>(",input$selection_SF2,")</b> par l'espèce sélectionnée
+    <b>(",input$selection_esp,")</b> au cours des mois de l'année centrés sur la période d'hivernage des limicoles. Les effectifs sont cumulés
+    entre pour tous les sous-sites séléctionnés, puis moyennés par mois.
+    <br>Le graphique est téléchargeable ci-dessous<br>  </div>",
+          sep=""))
+    })
   
-  output$soussiteBox <- renderValueBox({
-    valueBox(
-      nb_sites(), "Sous-sites fonctionnels", icon = icon("map-marked-alt", lib = "font-awesome"),
-      color = "green",width = 4
-    )
-  })
-  
-  nb_visites <- reactive({
-    res <- dplyr::filter(data(), site_fonctionnel_nom %in% input$selection_SF)
-    res <- dplyr::filter(res, cycle %in% input$selection_cycles)
-    n_distinct(res$id_visite)
-  })
-  
-  output$visitBox <- renderValueBox({
-    valueBox(
-      nb_visites(), "Visites", icon = icon("binoculars", lib = "font-awesome"),
-      color = "purple"
-    )
-  })
-  
-  nb_observations <- reactive({
-    res <- dplyr::filter(data(), site_fonctionnel_nom %in% input$selection_SF)
-    res <- dplyr::filter(res, cycle %in% input$selection_cycles)
-    nrow(res)
-  })
-  
-  output$obsBox <- renderValueBox({
-    valueBox(
-      nb_observations(), "Observations", icon = icon("kiwi-bird", lib = "font-awesome"),
-      color = "red"
-    )
-  })
   
   #coupure des connections à la base de données à la fermeture de shiny
   session$onSessionEnded(close_connection)
