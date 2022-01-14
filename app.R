@@ -1,5 +1,5 @@
 #Chargement des packages et installation des packages manquants (pour une utilisation en local, pas sur le serveur)
-list.of.packages <- c("shiny", "RPostgreSQL", "tidyr", "tidyverse", "lubridate", "ggplot2", "DT", "shinyWidgets", "shinydashboard", "plotly","ggtext")
+list.of.packages <- c("shiny", "DataCombine", "RPostgreSQL", "tidyr", "tidyverse", "lubridate", "ggplot2", "DT", "shinyWidgets", "shinydashboard", "plotly","ggtext")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 as.vector(new.packages)
 if(length(new.packages)) install.packages(new.packages)
@@ -52,7 +52,12 @@ get_data <- function() {
 limicoles <- get_data()
 
 #appel des tableau de données annexes stockées sur le serveur
-seuil.inter <- dbGetQuery(con,'select * from ann_limicoles."Seuils_internationaux"')
+seuil.international <- dbGetQuery(con,'select * from ann_limicoles."Seuils_internationaux"')
+seuil.nat <- dbGetQuery(con,'select * from ann_limicoles."Seuils_Nat_WI_2019_Transposee"') %>%
+  rename_with(toupper, hpi:tco)
+especes<-dbGetQuery(con,'select * from ann_limicoles."sp_latin_verna_abr"')
+
+  
 
 # fonction de fermeture de connexion postgres
 close_connection <- function() {
@@ -148,15 +153,18 @@ ui2 <- navbarPage("Limicoles côtiers",
                   ),
                   
                   #### Insertion des tag CSS pour les éléments de l'UI #####
-                  tags$head(tags$style(HTML('
-                      #textpheno{
-                        background-color: #b3b3e6 !important;
-                        padding: 10px;
-                        margin: 10px;
-                        border-radius: 15px 30px 30px;
-                        text-align: justify;
-                        border: none;
-                        }'))),
+                  tags$head(tags$style(HTML("
+                                  #textpheno{
+                                    background-color: #b3b3e6 !important;
+                                    padding: 10px;
+                                    margin: 10px;
+                                    border-radius: 15px 30px 30px;
+                                    text-align: justify;
+                                    border: none;
+                                    }
+                                  #RAMSAR{
+                                    border:red;
+                                  }"))),
                   
                   
                   tabPanel("Analyse générale",
@@ -230,12 +238,22 @@ ui2 <- navbarPage("Limicoles côtiers",
                              mainPanel(tabsetPanel(
                                tabPanel("Graphiques",
                                         fluidRow(column(9,plotOutput("pheno_mens")),
-                                                 column(3,fluidRow(column(12,htmlOutput("textpheno")),
+                                                 column(3,fluidRow(column(12,prettyCheckboxGroup(label = "Seuils RAMSAR 1%",
+                                                                                                inputId = "RAMSAR",
+                                                                                                choices = c("National","International"),
+                                                                                                shape = "curve",
+                                                                                                animation = "pulse",
+                                                                                                width = '100%')),
                                                                    column(12,downloadBttn("DownloadPheno",
-                                                                                          label = "Télécharger la phénologie"))
+                                                                                          label = "Télécharger le graphique",
+                                                                                          style = "jelly",
+                                                                                          size = "sm",
+                                                                                          block = T))
                                                                    )
                                                         )
-                                                 )),
+                                                 ),
+                                        fluidRow(column(12,htmlOutput("textpheno"))),
+                                        ),
                                tabPanel("Données",
                                         fluidRow(column(12,dataTableOutput("table"))),
                                         fluidRow(column(12,dataTableOutput("datapheno")))),
@@ -273,6 +291,7 @@ data <- reactivePoll(60000, session,
   
   ############### Panel d'analyse générale #######################
   
+
   output$plot1 <- renderPlotly({
     g <- ggplot(filtered_data()) + aes(x = lubridate::floor_date(date_comptage, "week")) + 
       geom_bar(fill="steelblue") +
@@ -354,11 +373,28 @@ data <- reactivePoll(60000, session,
       as.data.frame() %>%
       group_by(mois) %>%
       summarize(Moyenne_effectif = mean(Somme_annuelle,na.rm=T),
-                sd_effectif = sd(Somme_annuelle,na.rm = T)) %>%
-      mutate(Mois = c("Jan.","Fév.","Mar.","Avr.","Mai","Juin","Juil.","Aout","Sept.","Oct.","Nov.","Déc.")) %>%
-      slice(match(ordremois, Mois)) %>%
-      mutate(across(where(is.numeric), round, 1)) %>%
-      as.data.frame()
+                sd_effectif = sd(Somme_annuelle,na.rm = T))
+    
+    if (nrow(t2)!=12){  #Test pour résoudre le problème des mois manquants : permet d'insérer des lignes avec des NA quand il n'y pas de comptage pour le mois en question sur période
+      if (max(t2$mois)!=12){  #Permet de résoudre le problème qui apparait dans la boucle for juste après, lorsque le mois manquant est le 12 (décembre) : on ajoute d'abord la ligne 12eme mois, avec des NA pour moyenne et sd
+        lig<-c(rep(0,3))
+        lig[1] <- 12
+        lig[2:3] <- NA
+        t2 <- InsertRow(t2,NewRow = as.list(lig))
+      }
+      k<-1
+      if (nrow(t2)!=12){for (k in 1:12){  #Boucle pour insérer les mois manquants quand il y en a
+        lig = c(rep(0,3))
+        if (t2[k,1]!=k){
+          lig[1] <- k
+          lig[2:3] <- NA
+          t2 <- InsertRow(t2,NewRow = as.list(lig), RowNum = k)
+        }}
+      }}
+      t2<- t2 %>% mutate(Mois = c("Jan.","Fév.","Mar.","Avr.","Mai","Juin","Juil.","Aout","Sept.","Oct.","Nov.","Déc.")) %>%
+        slice(match(ordremois, Mois)) %>%
+        mutate(across(where(is.numeric), round, 1)) %>%
+        as.data.frame()
     
     t2
   })
@@ -367,6 +403,36 @@ data <- reactivePoll(60000, session,
     data_graphe_pheno()
   })
   
+  #Récupération du seuil international pour l'espèce
+  seuil.inter<-reactive({
+    seuil.international[which(seuil.international$vernaculaire==input$selection_esp),"seuil_1pourc_internat"]
+  })
+  
+  #Fonction pour récupération du seuil national moyenné entre deux bornes années 
+  seuils.cycle<-function(y1,y2){
+    seuils<-seuil.nat
+    seuilsMaheo<-seuils[-c(1:20),]
+    seuils<-seuils[-21,];seuils$annee<-as.numeric(as.character(seuils$annee))
+    
+    seuil.cycle<-subset(seuils,seuils$annee>=y1 & seuils$annee<=y2)
+    Seuils<-round(colMeans((seuil.cycle[,-1])))
+    Seuils<-as.data.frame(Seuils)
+    colnames(Seuils)<-c(paste("Seuils 1% moyenne sur cycle",y1,y2))
+    
+    return(Seuils)
+  }
+  
+  #Récupération du seuil national en réctive par rapport aux changements d'espèces
+  seuil.national<-reactive({
+    abr_esp<-especes[which(especes$vernaculaire==input$selection_esp),"abr"]
+    if (abr_esp %in% colnames(seuil.nat)){
+      Seuilnational<-seuils.cycle(y1 = input$range[1], y2 = input$range[2])[abr_esp,]
+    } else {
+      Seuilnational<-as.numeric(NA)
+    }
+    
+    Seuilnational
+  })
   
   plotPhenomens<-reactive({
     ordremois<-c("Juil.","Aout","Sept.","Oct.","Nov.","Déc.","Jan.","Fév.","Mar.","Avr.","Mai","Juin") #ordre des mois voulus pour le graphique
