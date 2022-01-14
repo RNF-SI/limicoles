@@ -450,17 +450,6 @@ data <- reactivePoll(60000, session,
       geom_errorbar(aes(ymin=Moyenne_effectif, ymax=Moyenne_effectif+sd_effectif), 
                     width=.2,
                     position=position_dodge(.9))+
-      #geom_hline(aes(yintercept = seuil.inter, #placement de la ligne pour le seuil international
-      #               linetype=paste("Internat :",seuil.inter)),  #Titre de cette ligne pour la légende
-      #           colour = "darkred",
-      #           size=.5)+
-      #geom_hline(aes(yintercept = seuil.nat, #placement de la ligne pour le seuil national
-      #               linetype=paste("National : ",seuil.nat)), #Titre de cette ligne pour la légende
-      #           colour = "blue",
-      #           size=.5)+
-      #scale_linetype_manual(name = "Seuil 1%", #Nom du titre de la légende
-      #                      values = c(2,6),  #Définition du type de ligne pour les deux lignes. 2 c'est dashed, et 6 c'est dotdashed
-      #                      guide = guide_legend(override.aes = list(color = c("darkred", "blue"))))+ #On doit redéfinir les couleurs 
     labs(title=title, 
          x="Mois", 
          y = "Effectifs moyens",
@@ -478,11 +467,60 @@ data <- reactivePoll(60000, session,
                                               r = unit(5, "pt"),  # Rayon d'arrondi des coins
                                               linetype = 1),  #Type de ligne (trait plein, pointille, etc)),
             plot.caption = element_text(size=7,face="italic"), #Déf de la forme du copyright
-            axis.text.x = element_text(angle=45))#,
-    #legend.position=c(0.85,0.85),
-    #legend.title=element_text(face="bold",hjust = 0.5),
-    #legend.box.background = element_rect(fill="white"),
-    #legend.key.width=unit(0.7,"cm")) #permet d'agrandir un peu le petites boites ou sont les figurés dans la légende
+            axis.text.x = element_text(angle=45))
+    
+    if(!is.null(input$RAMSAR)){
+      if (setequal(input$RAMSAR,"National")){
+        plot<-plot + 
+          geom_hline(aes(yintercept = seuil.national(), #placement de la ligne pour le seuil national
+                         linetype=paste("National : ",seuil.national())), #Titre de cette ligne pour la légende
+                     colour = "blue",
+                     na.rm = T,
+                     size=.5)+
+          scale_linetype_manual(name = "Seuil 1%", #Nom du titre de la légende
+                                values = 6,  #Définition du type de ligne pour les deux lignes. 2 c'est dashed, et 6 c'est dotdashed
+                                guide = guide_legend(override.aes = list(color = c("blue"))))+ #On doit redéfinir les couleurs
+          theme(legend.position=c(0.85,0.85),
+                legend.title=element_text(face="bold",hjust = 0.5),
+                legend.box.background = element_rect(fill="white"),
+                legend.key.width=unit(0.7,"cm")) #permet d'agrandir un peu le petites boites ou sont les figurés dans la légende
+      
+        } else if (setequal(input$RAMSAR,"International")) {
+        plot<-plot + 
+          geom_hline(aes(yintercept = seuil.inter(), #placement de la ligne pour le seuil international
+                         linetype=paste("Internat :",seuil.inter())),  #Titre de cette ligne pour la légende
+                     colour = "darkred",
+                     na.rm = T, #ignorer le fait de faire une ligne si NA
+                     size=.5)+
+          scale_linetype_manual(name = "Seuil 1%", #Nom du titre de la légende
+                                values = 2,  #Définition du type de ligne pour les deux lignes. 2 c'est dashed, et 6 c'est dotdashed
+                                guide = guide_legend(override.aes = list(color = c("darkred"))))+ #On doit redéfinir les couleurs
+          theme(legend.position=c(0.85,0.85),
+                legend.title=element_text(face="bold",hjust = 0.5),
+                legend.box.background = element_rect(fill="white"),
+                legend.key.width=unit(0.7,"cm")) #permet d'agrandir un peu le petites boites ou sont les figurés dans la légende
+        
+      } else if (setequal(input$RAMSAR,c("National","International"))==T){
+        plot<-plot +
+          geom_hline(aes(yintercept = seuil.inter(), #placement de la ligne pour le seuil international
+                         linetype=paste("Internat :",seuil.inter())),  #Titre de cette ligne pour la légende
+                     colour = "darkred",
+                     na.rm = T, #ignorer le fait de faire une ligne si NA
+                     size=.5)+
+          geom_hline(aes(yintercept = seuil.national(), #placement de la ligne pour le seuil national
+                         linetype=paste("National : ",seuil.national())), #Titre de cette ligne pour la légende
+                     colour = "blue",
+                     na.rm = T,
+                     size=.5)+
+          scale_linetype_manual(name = "Seuil 1%", #Nom du titre de la légende
+                                values = c(2,6),  #Définition du type de ligne pour les deux lignes. 2 c'est dashed, et 6 c'est dotdashed
+                                guide = guide_legend(override.aes = list(color = c("darkred", "blue"))))+ #On doit redéfinir les couleurs
+          theme(legend.position=c(0.85,0.85),
+                legend.title=element_text(face="bold",hjust = 0.5),
+                legend.box.background = element_rect(fill="white"),
+                legend.key.width=unit(0.7,"cm")) #permet d'agrandir un peu le petites boites ou sont les figurés dans la légende
+      }
+    }
     
     plot
   })
