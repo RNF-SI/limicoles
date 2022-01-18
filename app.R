@@ -1,5 +1,5 @@
 #Chargement des packages et installation des packages manquants (pour une utilisation en local, pas sur le serveur)
-list.of.packages <- c("shiny", "DataCombine", "RPostgreSQL", "tidyr", "tidyverse", "lubridate", "ggplot2", "DT", "shinyWidgets", "shinydashboard", "plotly","ggtext")
+list.of.packages <- c("shiny", "DataCombine","formattable", "RPostgreSQL", "tidyr", "tidyverse", "lubridate", "ggplot2", "DT", "shinyWidgets", "shinydashboard", "plotly","ggtext")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 as.vector(new.packages)
 if(length(new.packages)) install.packages(new.packages)
@@ -157,7 +157,7 @@ ui2 <- navbarPage("Limicoles côtiers",
                                   #textpheno{
                                     background-color: #b3b3e6 !important;
                                     padding: 10px;
-                                    margin: 10px;
+                                    margin: 10px 10px 20px;
                                     border-radius: 15px 30px 30px;
                                     text-align: justify;
                                     border: none;
@@ -253,10 +253,11 @@ ui2 <- navbarPage("Limicoles côtiers",
                                                         )
                                                  ),
                                         fluidRow(column(12,htmlOutput("textpheno"))),
+                                        fluidRow(column(12,DT::dataTableOutput("datapheno")))
                                         ),
                                tabPanel("Données",
-                                        fluidRow(column(12,dataTableOutput("table"))),
-                                        fluidRow(column(12,dataTableOutput("datapheno")))),
+                                        fluidRow(column(12,dataTableOutput("table")))
+                                        ),
                                tabPanel("Indicateurs")
                              ))
                            )))
@@ -399,10 +400,7 @@ data <- reactivePoll(60000, session,
     t2
   })
   
-  output$datapheno <- renderDataTable({
-    data_graphe_pheno()
-  })
-  
+
   #Récupération du seuil international pour l'espèce
   seuil.inter<-reactive({
     seuil.international[which(seuil.international$vernaculaire==input$selection_esp),"seuil_1pourc_internat"]
@@ -546,9 +544,48 @@ data <- reactivePoll(60000, session,
     HTML(paste("Ce graphique montre l'évolution de la fréquentation du site fonctionnel choisi <b>(",input$selection_SF2,")</b> par l'espèce sélectionnée
     <b>(",input$selection_esp,")</b> au cours des mois de l'année centrés sur la période d'hivernage des limicoles. Les effectifs sont cumulés
     pour tous les sous-sites séléctionnés, puis moyennés par mois. Les écart-types représentés permettent d'apprécier la variabilité inter-annuelle de effectifs.
-    <br>Le graphique est téléchargeable ci-dessous :",
+    <br> Vous pouvez choisir d'afficher ou non les seuils d'importance 1% RAMSAR sur le graphe.
+    <br> Le graphique est téléchargeable au format PNG avec le bouton.
+    <br> Les données brutes correspondant aux moyennes du graphique visibles ci-dessous :",
           sep=""))
     })
+  
+  
+  data_table_pheno<-reactive({
+    initab <- data_graphe_pheno() %>% select(-mois) %>%
+      relocate(Mois, Moyenne_effectif, sd_effectif)
+    
+    ## On formate la fonction true/false qui permettra 
+    true_false_formatter <-
+      formatter("span",
+                style = x ~ style(
+                  font.weight = ifelse(x >= seuil.national(), "bold", ""),
+                  background = ifelse(x >= seuil.inter(), "rgba(227,53,15,0.8)", ifelse(x >= seuil.national(), "rgba(17,156, 165,0.8)", "")),
+                  border.radius = "5px",
+                  padding = "3px 7px 3px"
+                ))
+    
+    ## Use formattable
+    formattable(
+      initab,
+      align = c(rep("c",3)),
+      list(
+        ## use custom formatter for TRUE/FALSE values
+        Moyenne_effectif = true_false_formatter
+      )
+    )
+  })
+  
+  output$datapheno <- renderDT(
+    as.datatable(data_table_pheno(),
+                 class="hover",
+                 options = list(pageLength=12,                                                              #Déf du nombre de ligne par page
+                                dom = 'Bfrtip',                                                             #Déf des boutons affichés et de leur ordre, le B c'est pour les boutons de téléchargement
+                                buttons = c('copy', 'csv', 'excel'),                                        #Boutons de téléchargement autorisés (copier coller, download csv et excel)
+                                columnDefs = list(list(className = 'dt-body-center', targets = "_all"))),   #Forcer le centrer du corps des colonnes, pas des titres de colonnes
+                 extensions = c("Buttons"),                                                                 #Permet d'afficher les boutons de téléchargement qui sont une extensions aux boutons normaux
+                 rownames = F)
+  )
   
   
   #coupure des connections à la base de données à la fermeture de shiny
