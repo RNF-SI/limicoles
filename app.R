@@ -155,10 +155,10 @@ ui2 <- navbarPage("Limicoles côtiers",
                   #### Insertion des tag CSS pour les éléments de l'UI #####
                   tags$head(tags$style(HTML("
                                   #textpheno{
-                                    background-color: #b3b3e6 !important;
+                                    background-color: #e6b3b3 !important;
                                     padding: 10px;
                                     margin: 10px 10px 20px;
-                                    border-radius: 15px 30px 30px;
+                                    border-radius: 8px 30px 30px;
                                     text-align: justify;
                                     border: none;
                                     }
@@ -168,46 +168,72 @@ ui2 <- navbarPage("Limicoles côtiers",
                   
                   
                   tabPanel("Analyse générale",
-                           fluidRow(
-                             column(8,
-                                    pickerInput(
-                                      label = "Sélection des sites fonctionnels contributeurs de l'OPNL",
-                                      width = '100%',
-                                      inputId = "selection_SF", 
-                                      choices = levels(limicoles$site_fonctionnel_nom),
-                                      selected = levels(limicoles$site_fonctionnel_nom),
-                                      multiple = TRUE,
-                                      options = list(
-                                        `actions-box` = TRUE,
-                                        `deselect-all-text` = "Aucun site",
-                                        `select-all-text` = "Tous les sites fonctionnels",
-                                        `none-selected-text` = "Aucun SF de sélectionné",
-                                        `selected-text-format` = "count > 1",
-                                        `count-selected-text` = "{0} site sur {1}"
-                                      ))),
-                             column(4,
-                                    pickerInput(
-                                      label = "Sélection des cycles annuels d'intérêt",
-                                      width = '100%',
-                                      inputId = "selection_cycles",
-                                      choices = levels(limicoles$cycle),
-                                      selected = levels(limicoles$cycle),
-                                      multiple = TRUE,
-                                      options = list(
-                                        `actions-box` = TRUE,
-                                        `deselect-all-text` = "Aucun cycle",
-                                        `select-all-text` = "Tous les cycles",
-                                        `none-selected-text` = "Aucun cycle de sélectionné",
-                                        `selected-text-format` = "count > 1",
-                                        `count-selected-text` = "{0} cycle sur {1}"
-                                      )))
-                           ),
+                           #fluidRow(
+                           #  column(8,
+                           #         pickerInput(
+                           #           label = "Sélection des sites fonctionnels contributeurs de l'OPNL",
+                           #           width = '100%',
+                           #           inputId = "selection_SF", 
+                           #           choices = levels(limicoles$site_fonctionnel_nom),
+                           #           selected = levels(limicoles$site_fonctionnel_nom),
+                           #           multiple = TRUE,
+                           #           options = list(
+                           #             `actions-box` = TRUE,
+                           #             `deselect-all-text` = "Aucun site",
+                           #             `select-all-text` = "Tous les sites fonctionnels",
+                           #             `none-selected-text` = "Aucun SF de sélectionné",
+                           #             `selected-text-format` = "count > 1",
+                           #             `count-selected-text` = "{0} site sur {1}"
+                           #           ))),
+                           #  column(4,
+                           #         pickerInput(
+                           #           label = "Sélection des cycles annuels d'intérêt",
+                           #           width = '100%',
+                           #           inputId = "selection_cycles",
+                           #           choices = levels(limicoles$cycle),
+                           #           selected = levels(limicoles$cycle),
+                           #           multiple = TRUE,
+                           #           options = list(
+                           #             `actions-box` = TRUE,
+                           #             `deselect-all-text` = "Aucun cycle",
+                           #             `select-all-text` = "Tous les cycles",
+                           #             `none-selected-text` = "Aucun cycle de sélectionné",
+                           #             `selected-text-format` = "count > 1",
+                           #             `count-selected-text` = "{0} cycle sur {1}"
+                           #           )))
+                           #),
+                           
+                           
+                           
+                           fluidRow(column(4, 
+                                           h3(strong("Observatoire du Patrimoine Naturel Littoral - limicoles côtiers"))),
+                                           column(8, 
+                                                  img(src="Logo RNF vert.png",
+                                                      width=144,
+                                                      height=78,
+                                                      style="margin: 1rem;"),
+                                                  img(src="Logo CEFE.png",
+                                                      width=175,
+                                                      height=78,
+                                                      style="margin: 1rem;"),
+                                                  img(src="OFB_LogoHoriz_RVB.png",
+                                                      width=185,
+                                                      height=85,
+                                                      style="margin: 1rem;"),
+                                                  img(src="Logo-ephe-coul-1.png",
+                                                      width=100,
+                                                      height=85,
+                                                      style="margin: 1rem;"))),
+                           tags$hr(),
+                           tags$p(id="textintro",
+                             "Cet outil de visualisation de données du protocole de comptage mensuel des limicoles côtiers a été créé par l'",
+                              tags$a(href="https://www.reserves-naturelles.org/rnf/projets/observatoire-du-patrimoine-naturel-littoral","Observatoire du Patrimoine Naturel Littoral"),
+                              "de RNF ezdjapzdpoajzpdojazpodja"),
                            fluidRow(column(4,valueBoxOutput("soussiteBox",width = NULL)),
                                     column(4,valueBoxOutput("visitBox",width = NULL)),
                                     column(4,valueBoxOutput("obsBox",width = NULL))
                            ),
                            fluidRow(column(12,plotlyOutput("plot1")))
-                           
                   ),
                   tabPanel("Analyse par SF",
                            fluidPage(sidebarLayout(
@@ -243,7 +269,8 @@ ui2 <- navbarPage("Limicoles côtiers",
                                                                                                 choices = c("National","International"),
                                                                                                 shape = "curve",
                                                                                                 animation = "pulse",
-                                                                                                width = '100%')),
+                                                                                                width = '100%'),
+                                                                          style='padding-top:150px;'),
                                                                    column(12,downloadBttn("DownloadPheno",
                                                                                           label = "Télécharger le graphique",
                                                                                           style = "jelly",
@@ -253,7 +280,12 @@ ui2 <- navbarPage("Limicoles côtiers",
                                                         )
                                                  ),
                                         fluidRow(column(12,htmlOutput("textpheno"))),
-                                        fluidRow(column(12,DT::dataTableOutput("datapheno")))
+                                        fluidRow(column(9,DT::dataTableOutput("datapheno")),
+                                                 column(3,fluidRow(column(12,valueBoxOutput("SeuilNatBox",width = NULL),style='padding-top:50%;'),
+                                                                   column(12,valueBoxOutput("SeuilInterBox",width = NULL))
+                                                                  )
+                                                        )
+                                                )
                                         ),
                                tabPanel("Données",
                                         fluidRow(column(12,dataTableOutput("table")))
@@ -292,7 +324,8 @@ data <- reactivePoll(60000, session,
   
   ############### Panel d'analyse générale #######################
   
-
+ 
+  
   output$plot1 <- renderPlotly({
     g <- ggplot(filtered_data()) + aes(x = lubridate::floor_date(date_comptage, "week")) + 
       geom_bar(fill="steelblue") +
@@ -304,9 +337,9 @@ data <- reactivePoll(60000, session,
   })
   
   nb_sites <- reactive({
-    res <- limicoles %>% filter(site_fonctionnel_nom %in% input$selection_SF) %>%
-      filter(cycle %in% input$selection_cycles)
-    n_distinct(res$site)
+    #res <- limicoles %>% filter(site_fonctionnel_nom %in% input$selection_SF) %>%
+    #  filter(cycle %in% input$selection_cycles)
+    n_distinct(limicoles$site)
   })
   
   output$soussiteBox <- renderValueBox({
@@ -343,7 +376,10 @@ data <- reactivePoll(60000, session,
   })
   
   
+  
+  #--------------------------------------------------------------------------#
   ############### Panel d'analyse par site fonctionnel #######################
+  #--------------------------------------------------------------------------#
   
   #Filtrage des données brutes pour le site fonctionnel et les sous-sites sélectionnés
   data_pheno <- reactive({
@@ -401,12 +437,12 @@ data <- reactivePoll(60000, session,
   })
   
 
-  #Récupération du seuil international pour l'espèce
+  #Récupération du seuil INTERNATIONAL pour l'espèce
   seuil.inter<-reactive({
     seuil.international[which(seuil.international$vernaculaire==input$selection_esp),"seuil_1pourc_internat"]
   })
   
-  #Fonction pour récupération du seuil national moyenné entre deux bornes années 
+  #Fonction pour récupération du seuil NATIONAL moyenné entre deux bornes années 
   seuils.cycle<-function(y1,y2){
     seuils<-seuil.nat
     seuilsMaheo<-seuils[-c(1:20),]
@@ -420,7 +456,7 @@ data <- reactivePoll(60000, session,
     return(Seuils)
   }
   
-  #Récupération du seuil national en réctive par rapport aux changements d'espèces
+  #Récupération du seuil NATIONAL en réctive par rapport aux changements d'espèces
   seuil.national<-reactive({
     abr_esp<-especes[which(especes$vernaculaire==input$selection_esp),"abr"]
     if (abr_esp %in% colnames(seuil.nat)){
@@ -432,6 +468,8 @@ data <- reactivePoll(60000, session,
     Seuilnational
   })
   
+  
+  #Création du ggplot avec différentes options pour ajouter les seuils RAMSAR ou non
   plotPhenomens<-reactive({
     ordremois<-c("Juil.","Aout","Sept.","Oct.","Nov.","Déc.","Jan.","Fév.","Mar.","Avr.","Mai","Juin") #ordre des mois voulus pour le graphique
     title<-paste("<span style = 'font-size:12pt'><b>Effectifs moyens agrégés par mois pour les sous-sites séléctionnés - ",input$range[1]," à ",input$range[2],"</b><br>
@@ -524,10 +562,12 @@ data <- reactivePoll(60000, session,
   })
   
   
+  #Fonction de render du graphique ggplot créé, qui permet de l'afficher sur le shiny
   output$pheno_mens<-renderPlot({
     plotPhenomens()
     })
   
+  #Création du bouton pour télécharger le graphique
   output$DownloadPheno <- downloadHandler(
         filename = function(){paste("PhenoMensAgg_",input$selection_SF2,"_",input$selection_esp,"_",input$range[1],".",input$range[2],".png",sep = "")} , # variable du nom
         content = function(file) {
@@ -540,35 +580,35 @@ data <- reactivePoll(60000, session,
                  units = "cm")
         })
   
+  #création d'un paragraphe texte explicatif sur les éléments du graphique
   output$textpheno<-renderText({
     HTML(paste("Ce graphique montre l'évolution de la fréquentation du site fonctionnel choisi <b>(",input$selection_SF2,")</b> par l'espèce sélectionnée
     <b>(",input$selection_esp,")</b> au cours des mois de l'année centrés sur la période d'hivernage des limicoles. Les effectifs sont cumulés
     pour tous les sous-sites séléctionnés, puis moyennés par mois. Les écart-types représentés permettent d'apprécier la variabilité inter-annuelle de effectifs.
     <br> Vous pouvez choisir d'afficher ou non les seuils d'importance 1% RAMSAR sur le graphe.
-    <br> Le graphique est téléchargeable au format PNG avec le bouton.
-    <br> Les données brutes correspondant aux moyennes du graphique visibles ci-dessous :",
+    <br> <em>Le graphique est téléchargeable au format PNG avec le bouton à droite de l'image.</em>",
           sep=""))
     })
   
   
+  ##On crée un tableau spécifique réactif avec les éléments présents dans le graphique
   data_table_pheno<-reactive({
     initab <- data_graphe_pheno() %>% select(-mois) %>%
       relocate(Mois, Moyenne_effectif, sd_effectif)
     
-    ## On formate la fonction true/false qui permettra 
+    ## On formate la fonction true/false qui permettra la mise en forme conditionnelle de la colonne "Moyenne_effectif" avec le package formattable
     true_false_formatter <-
       formatter("span",
-                style = x ~ style(
+                style = x ~ formattable::style(  #On pointe vers la fonctin style de formattable car plotly possède aussi une fonction style et ça crée une ollision sinon
                   font.weight = ifelse(x >= seuil.national(), "bold", ""),
                   background = ifelse(x >= seuil.inter(), "rgba(227,53,15,0.8)", ifelse(x >= seuil.national(), "rgba(17,156, 165,0.8)", "")),
-                  border.radius = "5px",
-                  padding = "3px 7px 3px"
+                  border.radius = "5px",      #Arrondi les coins du background
+                  padding = "3px 7px 3px"     #Défini la taille du rectangle de background. 1ere valeur haut, 2ème valeur droite et gauche, troisième valeur bas
                 ))
     
     ## Use formattable
     formattable(
       initab,
-      align = c(rep("c",3)),
       list(
         ## use custom formatter for TRUE/FALSE values
         Moyenne_effectif = true_false_formatter
@@ -582,10 +622,40 @@ data <- reactivePoll(60000, session,
                  options = list(pageLength=12,                                                              #Déf du nombre de ligne par page
                                 dom = 'Bfrtip',                                                             #Déf des boutons affichés et de leur ordre, le B c'est pour les boutons de téléchargement
                                 buttons = c('copy', 'csv', 'excel'),                                        #Boutons de téléchargement autorisés (copier coller, download csv et excel)
-                                columnDefs = list(list(className = 'dt-body-center', targets = "_all"))),   #Forcer le centrer du corps des colonnes, pas des titres de colonnes
+                                columnDefs = list(list(className = 'dt-center', targets = "_all"))),   #Forcer le centrer du corps des colonnes, pas des titres de colonnes
                  extensions = c("Buttons"),                                                                 #Permet d'afficher les boutons de téléchargement qui sont une extensions aux boutons normaux
                  rownames = F)
   )
+  
+  
+  ##Création des valueBox à droit du tableau
+  nb_sup_seuil_nat <- reactive({
+    length(which(data_graphe_pheno()$Moyenne_effectif>=seuil.national()))
+  })
+  
+  output$SeuilNatBox <- renderValueBox({
+    valueBox(
+      nb_sup_seuil_nat(), 
+      subtitle = "Nombre de mois où le seuil RAMSAR national est dépassé en moyenne", 
+      icon = icon("flag", lib = "font-awesome"),
+      color = "teal",
+      width = 3
+    )
+  })
+  
+  nb_sup_seuil_inter<- reactive({
+    length(which(data_graphe_pheno()$Moyenne_effectif>=seuil.inter()))
+  })
+  
+  output$SeuilInterBox <- renderValueBox({
+    valueBox(
+      nb_sup_seuil_inter(), 
+      subtitle = "Nombre de mois où le seuil RAMSAR international est dépassé en moyenne", 
+      icon = icon("globe-europe", lib = "font-awesome"),
+      color = "red",
+      width = 3
+    )
+  })
   
   
   #coupure des connections à la base de données à la fermeture de shiny
