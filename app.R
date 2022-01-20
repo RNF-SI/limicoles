@@ -152,21 +152,6 @@ ui2 <- navbarPage("Limicoles côtiers",
                     useShinydashboard()
                   ),
                   
-                  #### Insertion des tag CSS pour les éléments de l'UI #####
-                  tags$head(tags$style(HTML("
-                                  #textpheno{
-                                    background-color: #e6b3b3 !important;
-                                    padding: 10px;
-                                    margin: 10px 10px 20px;
-                                    border-radius: 8px 30px 30px;
-                                    text-align: justify;
-                                    border: none;
-                                    }
-                                  #RAMSAR{
-                                    border:red;
-                                  }"))),
-                  
-                  
                   tabPanel("Analyse générale",
                            #fluidRow(
                            #  column(8,
@@ -204,7 +189,6 @@ ui2 <- navbarPage("Limicoles côtiers",
                            #),
                            
                            
-                           
                            fluidRow(column(4, 
                                            h3(strong("Observatoire du Patrimoine Naturel Littoral - limicoles côtiers"))),
                                            column(8, 
@@ -228,7 +212,17 @@ ui2 <- navbarPage("Limicoles côtiers",
                            tags$p(id="textintro",
                              "Cet outil de visualisation de données du protocole de comptage mensuel des limicoles côtiers a été créé par l'",
                               tags$a(href="https://www.reserves-naturelles.org/rnf/projets/observatoire-du-patrimoine-naturel-littoral","Observatoire du Patrimoine Naturel Littoral"),
-                              "de RNF ezdjapzdpoajzpdojazpodja"),
+                              "animé par Réserves naturelles de France (RNF) et développé depuis 2009 avec le concours de l’Office Français de la Biodiversité (OFB). 
+                             L'OPNL est une démarche à caractère national, ascendante et collective : portée par et pour les gestionnaires d’Aires Marines Protégées (AMP), au service de leurs stratégies de gestion."),
+                           
+                           tags$p("Applicable à de larges territoires, reproductible et facile à mettre en œuvre, le protocole de surveillance scientifique des oiseaux limicoles côtiers se traduit par des comptages 
+                           mensuels aux dates des IWC (International Waderbird Census), soit vers le milieu de chaque mois, avec une différenciation des données 
+                           recueillies sur les aires marines protégées de celles observées en dehors, pour évaluer les dispositifs de gestion et de protection de la nature mis en place (mesure de l’effet gestion)."),
+                           tags$p("Lancé en 2000, ce dispositif de surveillance est aujourd’hui mis en œuvre sur près de 95 localités littorales. S’inscrivant en complémentarité des comptages nationaux et 
+                                  internationaux conduits à la mi-janvier (Wetlands International), cette initiative se traduit par une",
+                                  tags$b("standardisation mensuelle des dénombrements"),"étendue à l’ensemble du cycle annuel."),
+                           
+                           
                            fluidRow(column(4,valueBoxOutput("soussiteBox",width = NULL)),
                                     column(4,valueBoxOutput("visitBox",width = NULL)),
                                     column(4,valueBoxOutput("obsBox",width = NULL))
@@ -280,6 +274,13 @@ ui2 <- navbarPage("Limicoles côtiers",
                                                         )
                                                  ),
                                         fluidRow(column(12,htmlOutput("textpheno"))),
+                                        tags$head(tags$style(HTML("#textpheno{background-color: #e6b3b3;
+                                                             padding: 15px;
+                                                             margin: 10px 10px 20px;
+                                                             border-radius: 8px 30px 30px;
+                                                             text-align: justify;
+                                                             border: none;
+                                                                           }"))),
                                         fluidRow(column(9,DT::dataTableOutput("datapheno")),
                                                  column(3,fluidRow(column(12,valueBoxOutput("SeuilNatBox",width = NULL),style='padding-top:50%;'),
                                                                    column(12,valueBoxOutput("SeuilInterBox",width = NULL))
@@ -290,7 +291,17 @@ ui2 <- navbarPage("Limicoles côtiers",
                                tabPanel("Données",
                                         fluidRow(column(12,dataTableOutput("table")))
                                         ),
-                               tabPanel("Indicateurs")
+                               tabPanel("Indicateurs",
+                                        h3(strong("Indicateurs d'état des populations de limicoles en janvier")),
+                                        p("Dans cet onglet, nous présentons les éléments des",strong("fiches indicateurs"),"établies sur la base des comptages de populations
+                                          à la mi-janvier. Ces comptages sont valorisés par l'OPNL au sein d'une fiche synthétique établie pour chaque site fonctionnel et chaque espèce d'importance
+                                          dans le site en question."),
+                                        p("Chacun des éléments présenté ci-dessous est téléchargeable à l'aide du bouton associé."),
+                                        p(strong("La fiche complète est téléchargeable en bas de document pour la décennie séléctionnée")),
+                                        hr()
+                                        
+                                        )
+                                        
                              ))
                            )))
 )
@@ -350,9 +361,9 @@ data <- reactivePoll(60000, session,
   })
   
   nb_visites <- reactive({
-    res <- dplyr::filter(data(), site_fonctionnel_nom %in% input$selection_SF)
-    res <- dplyr::filter(res, cycle %in% input$selection_cycles)
-    n_distinct(res$id_visite)
+    #res <- dplyr::filter(data(), site_fonctionnel_nom %in% input$selection_SF)
+    #res <- dplyr::filter(res, cycle %in% input$selection_cycles)
+    n_distinct(limicoles$id_visite)
   })
   
   output$visitBox <- renderValueBox({
@@ -363,9 +374,9 @@ data <- reactivePoll(60000, session,
   })
   
   nb_observations <- reactive({
-    res <- dplyr::filter(data(), site_fonctionnel_nom %in% input$selection_SF)
-    res <- dplyr::filter(res, cycle %in% input$selection_cycles)
-    nrow(res)
+    #res <- dplyr::filter(data(), site_fonctionnel_nom %in% input$selection_SF)
+    #res <- dplyr::filter(res, cycle %in% input$selection_cycles)
+    nrow(limicoles)
   })
   
   output$obsBox <- renderValueBox({
@@ -582,12 +593,13 @@ data <- reactivePoll(60000, session,
   
   #création d'un paragraphe texte explicatif sur les éléments du graphique
   output$textpheno<-renderText({
-    HTML(paste("Ce graphique montre l'évolution de la fréquentation du site fonctionnel choisi <b>(",input$selection_SF2,")</b> par l'espèce sélectionnée
+    paste(
+    "Ce graphique montre l'évolution de la fréquentation du site fonctionnel choisi <b>(",input$selection_SF2,")</b> par l'espèce sélectionnée
     <b>(",input$selection_esp,")</b> au cours des mois de l'année centrés sur la période d'hivernage des limicoles. Les effectifs sont cumulés
     pour tous les sous-sites séléctionnés, puis moyennés par mois. Les écart-types représentés permettent d'apprécier la variabilité inter-annuelle de effectifs.
     <br> Vous pouvez choisir d'afficher ou non les seuils d'importance 1% RAMSAR sur le graphe.
-    <br> <em>Le graphique est téléchargeable au format PNG avec le bouton à droite de l'image.</em>",
-          sep=""))
+    <br> <em>Le graphique est téléchargeable au format PNG avec le bouton à droite de l'image.</em></p>",
+          sep="")
     })
   
   
