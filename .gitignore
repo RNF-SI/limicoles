@@ -38,4 +38,7 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
+# Dossier des images des indicateurs
+/Indicateurs
+
 config.R

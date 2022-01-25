@@ -56,7 +56,7 @@ seuil.international <- dbGetQuery(con,'select * from ann_limicoles."Seuils_inter
 seuil.nat <- dbGetQuery(con,'select * from ann_limicoles."Seuils_Nat_WI_2019_Transposee"') %>%
   rename_with(toupper, hpi:tco)
 especes<-dbGetQuery(con,'select * from ann_limicoles."sp_latin_verna_abr"')
-
+SF_abr<-dbGetQuery(con,'select * from ann_limicoles."Sites.Fonctionnels_Abr"')
   
 
 # fonction de fermeture de connexion postgres
@@ -65,89 +65,11 @@ close_connection <- function() {
   dbUnloadDriver(drv)
 }
 
-# Definition de l'UI version dashboard (interface utilisateur)
-#ui <- dashboardPage(
-#  
-#  dashboardHeader(title = "Limicoles Côtiers RNF"),
-#  ## Sidebar content
-#  dashboardSidebar(
-#    sidebarMenu(
-#      menuItem("Analyse globale", 
-#               tabName = "dashboard", 
-#               icon = icon("dashboard"),
-#               pickerInput(
-#                 inputId = "selection_SF", 
-#                 choices = levels(limicoles$site_fonctionnel_nom),
-#                 selected = levels(limicoles$site_fonctionnel_nom),
-#                 multiple = TRUE,
-#                 options = list(
-#                   `actions-box` = TRUE,
-#                   `deselect-all-text` = "Aucun site",
-#                   `select-all-text` = "Tous les sites fonctionnels",
-#                   `none-selected-text` = "Aucun SF de sélectionné",
-#                   `selected-text-format` = "count > 1",
-#                   `count-selected-text` = "{0} site sur {1}"
-#                 )),
-#               pickerInput(
-#                 inputId = "selection_cycles", 
-#                 choices = levels(limicoles$cycle),
-#                 selected = levels(limicoles$cycle),
-#                 multiple = TRUE,
-#                 options = list(
-#                   `actions-box` = TRUE,
-#                   `deselect-all-text` = "Aucun cycle",
-#                   `select-all-text` = "Tous les cycles",
-#                   `none-selected-text` = "Aucun cycle de sélectionné",
-#                   `selected-text-format` = "count > 1",
-#                   `count-selected-text` = "{0} cycle sur {1}"
-#                 )),
-#               menuSubItem("Boxs", tabName = "boxs")
-#               #menuSubItem("Graphique", tabName = "occurence")
-#               ),
-#      menuItem("Analyse d'un site", 
-#               tabName = "widgets", 
-#               icon = icon("th"),
-#               pickerInput(
-#                 inputId = "selection_sites_fonctionnels", 
-#                 label = "Site fonctionnel :",
-#                 choices = levels(limicoles$site_fonctionnel_nom)
-#                 ),
-#               menuSubItem("blabla", tabName = "blabla"))
-#    )
-#  ),
-#  ## Body content
-#  dashboardBody(
-#    tabItems(
-#      tabItem(tabName = "boxs",
-#              fluidRow(
-#                # Dynamic valueBoxes
-#                valueBoxOutput("soussiteBox"),
-#                valueBoxOutput("visitBox"),
-#                valueBoxOutput("obsBox")
-#              )),
-#      # First tab content
-#      tabItem(tabName = "occurence",
-#              fluidRow(
-#                box(plotlyOutput("plot1", height = 250)),
-#                
-#                box(plotOutput("plot2", height = 250))
-#              )
-#      ),
-#      
-#      # Second tab content
-#      tabItem(tabName = "widgets",
-#              h2("Widgets tab content")
-#      )
-#    )
-#  )
-#)
-
-
 
 ui2 <- navbarPage("Limicoles côtiers",
                   #Déf du premier onglet du shiny : l'analyse génrale tous SFs confondus
                   
-                  ###### Here : insert shinydashboard dependencies ######
+                  # Here : insert shinydashboard dependencies #
                   header = tagList(
                     useShinydashboard()
                   ),
@@ -298,9 +220,54 @@ ui2 <- navbarPage("Limicoles côtiers",
                                           dans le site en question."),
                                         p("Chacun des éléments présenté ci-dessous est téléchargeable à l'aide du bouton associé."),
                                         p(strong("La fiche complète est téléchargeable en bas de document pour la décennie séléctionnée")),
+                                        hr(),
+                                        fluidRow(
+                                          column(8,htmlOutput("textindic")),
+                                          tags$head(tags$style(HTML("#textindic{background-color: #bdbde5;
+                                                             padding: 10px;
+                                                             margin: 10px;
+                                                             border-radius: 20px 8px 8px 20px;
+                                                             text-align: justify;
+                                                             border: none;
+                                                                           }"))),
+                                          column(4,pickerInput(
+                                                       label = "Sélection décennie glissante",
+                                                       width = '100%',
+                                                       inputId = "selection_dec",
+                                                       choices = c("2007-2016" = "2007.2016",
+                                                                   "2008-2017" = "2008.2017",
+                                                                   "2009-2018" = "2009.2018",
+                                                                   "2010-2019" = "2010.2019"),
+                                                       selected = "2008.2017",
+                                                       multiple = FALSE,
+                                                       options = list(`actions-box` = TRUE)
+                                                       ))
+                                        ),
+                                        fluidRow(
+                                          column(6,offset = 3,downloadBttn("DownloadIndic",
+                                                                           label = "Télécharger les indicateurs pour toutes les espèces",
+                                                                           style = "jelly",
+                                                                           size = "sm",
+                                                                           block = T))
+                                                ),
+                                        hr(),
+                                        h4(strong("Informations générales pour le site fonctionnel")),
+                                        fluidRow(column(6,imageOutput("tabIndic"),align="center",style="padding-top:25px;padding-bottom:5px;"),
+                                                 column(6,imageOutput("Rmultiesp"),align="center",style="padding-top:25px;")
+                                                 ),
+                                        fluidRow(column(6,downloadBttn("Download_tabIndic",
+                                                                       label = "Télécharger le tableau",
+                                                                       style = "jelly",
+                                                                       size = "sm",
+                                                                       block = T)),
+                                                 column(6,downloadBttn("Download_RIndic",
+                                                                       label = "Télécharger le graphique général",
+                                                                       style = "jelly",
+                                                                       size = "sm",
+                                                                       block = T))
+                                                 ),
                                         hr()
-                                        
-                                        )
+                                )
                                         
                              ))
                            )))
@@ -391,6 +358,19 @@ data <- reactivePoll(60000, session,
   #--------------------------------------------------------------------------#
   ############### Panel d'analyse par site fonctionnel #######################
   #--------------------------------------------------------------------------#
+  
+  
+  #On récupère l'abbréviation du site et de l'espèce sélectionnée
+  Abr_SF<-reactive({
+    SF_abr<- SF_abr %>% 
+      mutate(nom_SF=gsub("Site fonc. ","",site.fonctionnel))
+    
+    SF_abr[which(input$selection_SF2==SF_abr$nom_SF),"abb.site"] ##Récupère l'abbréaviation du site
+  })
+  
+  Abr_esp<-reactive({
+    especes[which(especes$vernaculaire==input$selection_esp),"abr"]
+  })
   
   #Filtrage des données brutes pour le site fonctionnel et les sous-sites sélectionnés
   data_pheno <- reactive({
@@ -669,6 +649,55 @@ data <- reactivePoll(60000, session,
     )
   })
   
+  
+  #--------------------------------------------------------------------------#
+  ################### Panel indicateurs limicoles ############################
+  #--------------------------------------------------------------------------#
+  
+  output$textindic<-renderText({
+    paste(
+      "Les indicateurs limicoles sont produits par périodes glissantes de 10 ans.  En sélectionnant une décennie à droite, vous aurez
+      accès à toutes les informations calculées pour l'espèce et le site fonctionnel choisi.<br>
+      Vous pouvez aussi télécharger la fiche complète pour <b>toutes les espèces</b> du site fonctionnel au format PDF avec le bouton ci dessous.")
+  })
+  
+  #Création du bouton pour télécharger le graphique
+  output$DownloadIndic <- downloadHandler(
+    filename = function(){paste("Indics_LimiCot_TousTaxons_",input$selection_SF2,"_",input$selection_dec,".png",sep = "")}, # variable du nom
+    content = function(file) {
+                   file.copy(paste("Indicateurs/Resultats_",input$selection_dec,"/5. FICHES/Fiche complete_",Abr_SF(),"_",input$selection_dec,".pdf",sep=""),
+                             file)
+    })
+  
+  output$tabIndic<-renderImage({
+    filepath<-paste("Indicateurs/Resultats_",input$selection_dec,"/5. FICHES/0. PreFiche/Tabpremierepage_",Abr_SF(),"_",input$selection_dec,".png",sep="")
+    list(src = filepath,
+         width = "100%",
+         height = "auto",
+         alt = "Tableau des données")
+  },deleteFile = F)
+  
+  output$Download_tabIndic <- downloadHandler(
+    filename = function(){paste("Tab_datasBrutesIndic_",input$selection_dec,"_",Abr_SF(),".png",sep="")}, # variable du nom
+    content = function(file) {
+      file.copy(paste("Indicateurs/Resultats_",input$selection_dec,"/5. FICHES/0. PreFiche/Tabpremierepage_",Abr_SF(),"_",input$selection_dec,".png",sep=""),
+                file)
+    })
+  
+  output$Rmultiesp<-renderImage({
+    filepath<-paste("Indicateurs/Resultats_",input$selection_dec,"/5. FICHES/0. PreFiche/R_especes_",Abr_SF(),"_",input$selection_dec,".png",sep="")
+    list(src = filepath,
+         width = "95%",
+         height = "auto",
+         alt = "Tendance des espèces")
+  },deleteFile = F)
+  
+  output$Download_RIndic <- downloadHandler(
+    filename = function(){paste("R_tousTaxons_",input$selection_dec,"_",Abr_SF(),".png",sep="")}, # variable du nom
+    content = function(file) {
+      file.copy(paste("Indicateurs/Resultats_",input$selection_dec,"/5. FICHES/0. PreFiche/R_especes_",Abr_SF(),"_",input$selection_dec,".png",sep=""),
+                file)
+    })
   
   #coupure des connections à la base de données à la fermeture de shiny
   session$onSessionEnded(close_connection)
