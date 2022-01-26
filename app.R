@@ -142,7 +142,7 @@ ui2 <- navbarPage("Limicoles côtiers",
                            recueillies sur les aires marines protégées de celles observées en dehors, pour évaluer les dispositifs de gestion et de protection de la nature mis en place (mesure de l’effet gestion)."),
                            tags$p("Lancé en 2000, ce dispositif de surveillance est aujourd’hui mis en œuvre sur près de 95 localités littorales. S’inscrivant en complémentarité des comptages nationaux et 
                                   internationaux conduits à la mi-janvier (Wetlands International), cette initiative se traduit par une",
-                                  tags$b("standardisation mensuelle des dénombrements"),"étendue à l’ensemble du cycle annuel."),
+                                  tags$b("standardisation mensuelle des dénombrements"),"étendue à l’ensemble du cycle annuel.",tags$b("Aujourd'hui l'OPNL c'est :")),
                            
                            
                            fluidRow(column(4,valueBoxOutput("soussiteBox",width = NULL)),
@@ -248,12 +248,13 @@ ui2 <- navbarPage("Limicoles côtiers",
                                                                            label = "Télécharger les indicateurs pour toutes les espèces",
                                                                            style = "jelly",
                                                                            size = "sm",
+                                                                           color = "warning",
                                                                            block = T))
                                                 ),
                                         hr(),
                                         h4(strong("Informations générales pour le site fonctionnel")),
-                                        fluidRow(column(6,imageOutput("tabIndic"),align="center",style="padding-top:25px;padding-bottom:5px;"),
-                                                 column(6,imageOutput("Rmultiesp"),align="center",style="padding-top:25px;")
+                                        fluidRow(column(6,imageOutput("tabIndic"),align="center",style="padding-top:25px;padding-bottom:10px;"),
+                                                 column(6,imageOutput("Rmultiesp"),align="center",style="padding-top:25px;padding-bottom:10px;")
                                                  ),
                                         fluidRow(column(6,downloadBttn("Download_tabIndic",
                                                                        label = "Télécharger le tableau",
@@ -266,7 +267,35 @@ ui2 <- navbarPage("Limicoles côtiers",
                                                                        size = "sm",
                                                                        block = T))
                                                  ),
-                                        hr()
+                                        hr(),
+                                        h4(strong("Indicateurs taxons-centrés")),
+                                        fluidRow(column(3,offset = 1,imageOutput("R_local"),style="padding-bottom:10px;"),
+                                                 column(3,offset = 1,imageOutput("R_SRM"),style="padding-bottom:10px;"),
+                                                 column(3,offset = 1,imageOutput("R_national"),style="padding-bottom:10px;")
+                                                 ),
+                                        fluidRow(column(3,offset = 1,downloadBttn("Dl_R_local",
+                                                                                 label = "Téléch. tendance loc.",
+                                                                                 style = "jelly",
+                                                                                 size = "xs",
+                                                                                 block = T)),
+                                                 column(3,offset = 1,downloadBttn("Dl_R_SRM",
+                                                                                 label = "Téléch. tendance SRM.",
+                                                                                 style = "jelly",
+                                                                                 size = "xs",
+                                                                                 block = T)),
+                                                 column(3,offset = 1,downloadBttn("Dl_R_national",
+                                                                                  label = "Téléch. tendance nat.",
+                                                                                  style = "jelly",
+                                                                                  size = "xs",
+                                                                                  block = T))),
+                                        fluidRow(column(12,htmlOutput("text_tendances"))),
+                                        tags$head(tags$style(HTML("#text_tendances{background-color: #e6b3b3;
+                                                             padding: 15px;
+                                                             margin: 10px 10px 10px;
+                                                             border-radius: 8px 8px 30px 30px;
+                                                             text-align: justify;
+                                                             border: none;
+                                                                           }")))
                                 )
                                         
                              ))
@@ -661,7 +690,7 @@ data <- reactivePoll(60000, session,
       Vous pouvez aussi télécharger la fiche complète pour <b>toutes les espèces</b> du site fonctionnel au format PDF avec le bouton ci dessous.")
   })
   
-  #Création du bouton pour télécharger le graphique
+  #Création du bouton pour télécharger le pdf complet
   output$DownloadIndic <- downloadHandler(
     filename = function(){paste("Indics_LimiCot_TousTaxons_",input$selection_SF2,"_",input$selection_dec,".png",sep = "")}, # variable du nom
     content = function(file) {
@@ -698,6 +727,64 @@ data <- reactivePoll(60000, session,
       file.copy(paste("Indicateurs/Resultats_",input$selection_dec,"/5. FICHES/0. PreFiche/R_especes_",Abr_SF(),"_",input$selection_dec,".png",sep=""),
                 file)
     })
+  
+  output$R_local<-renderImage({
+    filepath<-paste("Indicateurs/Resultats_",input$selection_dec,"/2. Graphiques/Local/Taux.loc_",Abr_esp(),"_",Abr_SF(),gsub("\\.","_",input$selection_dec),".png",sep="")
+    list(src = filepath,
+         width = "auto",
+         height = "100%",
+         alt = "Tendance locale")
+  },deleteFile = F)
+  
+  output$R_SRM<-renderImage({
+    filepath<-paste("Indicateurs/Resultats_",input$selection_dec,"/2. Graphiques/Sous-region marine/Taux.locSRM_",Abr_esp(),"_",Abr_SF(),gsub("\\.","_",input$selection_dec),".png",sep="")
+    list(src = filepath,
+         width = "auto",
+         height = "100%",
+         alt = "Tendance façade maritime")
+  },deleteFile = F)
+  
+  output$R_national<-renderImage({
+    filepath<-paste("Indicateurs/Resultats_",input$selection_dec,"/2. Graphiques/National/Taux.loc.nat_",Abr_esp(),"_",Abr_SF(),gsub("\\.","_",input$selection_dec),".png",sep="")
+    list(src = filepath,
+         width = "auto",
+         height = "100%",
+         alt = "Tendance nationale")
+  },deleteFile = F)
+  
+  output$Dl_R_local<-downloadHandler(
+    filename = function(){paste("Tendance locale_",Abr_esp(),"_",input$selection_dec,"_",Abr_SF(),".png",sep="")}, # variable du nom
+    content = function(file) {
+      file.copy(paste("Indicateurs/Resultats_",input$selection_dec,"/2. Graphiques/Local/Taux.loc_",Abr_esp(),"_",Abr_SF(),gsub("\\.","_",input$selection_dec),".png",sep=""),
+                file)
+    })
+  
+  output$Dl_R_SRM<-downloadHandler(
+    filename = function(){paste("Tendance loc/facade_",Abr_esp(),"_",input$selection_dec,"_",Abr_SF(),".png",sep="")}, # variable du nom
+    content = function(file) {
+      file.copy(paste("Indicateurs/Resultats_",input$selection_dec,"/2. Graphiques/Sous-region marine/Taux.locSRM_",Abr_esp(),"_",Abr_SF(),gsub("\\.","_",input$selection_dec),".png",sep=""),
+                file)
+    })
+  
+  output$Dl_R_national<-downloadHandler(
+    filename = function(){paste("Tendance loc/nationale_",Abr_esp(),"_",input$selection_dec,"_",Abr_SF(),".png",sep="")}, # variable du nom
+    content = function(file) {
+      file.copy(paste("Indicateurs/Resultats_",input$selection_dec,"/2. Graphiques/National/Taux.loc.nat_",Abr_esp(),"_",Abr_SF(),gsub("\\.","_",input$selection_dec),".png",sep=""),
+                file)
+    })
+  
+  output$text_tendances<-renderText({
+    paste(
+      "<p><b>r :</b> tendance pour l'espèce et l'entité géographique sur la décennie sélectionnée. <em> Exemple : -0.07 [-0.01 ; -0.12] 
+      correspond à une tendance à la décroissance estimée à environ -7%, avec un intervalle de crédibilité de -1% à -12% </p>
+      <p><b>Proba (r > 0) :</b> correspond à la probabilité calculée que la tendance donnée soit effectivement supérieure à 0 (<em>respectivement inférieure</em>) lorsque que l'intervalle de
+      crédibilité de la tendance recouvre 0. Si cette probabilité est de 100%, on considère que la population est statistiquement considérable comme en croissance (<em>resp. en décroissance</em>)</p>
+      <p><b>Proba (r < r.SRM <em>ou r.nat</em>) :</b> correspond à la probabilité que la tendance <b>locale</b> soit effectivement inférieure (<em>resp. supérieure</em>)
+      à la tendance à l'échelle de la SRM ou à la tendance nationale.</p>
+      <p><b>n :</b> nombre de mois de janvier où un comptage a eu lieu pour la décennie glissante considérée (<em>max 10</em>)<br>
+      <b>n.SRM :</b> nombre de sites fonctionnels inclus dans le calcul de la tendances à l'échelle SRM <br>
+      <b>n.nat :</b> nombre de sites fonctionnels inclus dans le calcul de la tendances à l'échelle nationale")
+  })
   
   #coupure des connections à la base de données à la fermeture de shiny
   session$onSessionEnded(close_connection)
