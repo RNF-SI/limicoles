@@ -149,7 +149,10 @@ ui2 <- navbarPage("Limicoles côtiers",
                                     column(4,valueBoxOutput("visitBox",width = NULL)),
                                     column(4,valueBoxOutput("obsBox",width = NULL))
                            ),
-                           fluidRow(column(12,plotlyOutput("plot1")))
+                           fluidRow(column(6,plotlyOutput("Evo_contributeurs")),
+                                    column(6,img(src="Carte_contrib.tif",
+                                                 width=567,
+                                                 height=394)))
                   ),
                   tabPanel("Analyse par SF",
                            fluidPage(sidebarLayout(
@@ -348,13 +351,15 @@ data <- reactivePoll(60000, session,
   
  
   
-  output$plot1 <- renderPlotly({
-    g <- ggplot(filtered_data()) + aes(x = lubridate::floor_date(date_comptage, "week")) + 
-      geom_bar(fill="steelblue") +
-      geom_text(stat='count', aes(label=..count..), vjust=1.6, color="white", size=3.5) +
-      theme_minimal() +
-      labs(title="Nombre d'observations par semaine", 
-           x="", y = "Individus")
+  output$Evo_contributeurs <- renderPlotly({
+    tgraph<-limicoles %>% group_by(annee) %>%
+      summarise(Nb_sous_sites=length(unique(site))) %>% 
+      as.data.frame()
+      
+    
+    g <- ggplot(tgraph, aes(x =annee,y=Nb_sous_sites)) + 
+      geom_line()
+
     ggplotly(g)
   })
   
