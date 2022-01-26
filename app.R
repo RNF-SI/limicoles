@@ -179,6 +179,7 @@ ui2 <- navbarPage("Limicoles côtiers",
                              ),
                              mainPanel(tabsetPanel(
                                tabPanel("Graphiques",
+                                        h4(strong("Distribution mensuelle à l'échelle du site fonctionnel")),
                                         fluidRow(column(9,plotOutput("pheno_mens")),
                                                  column(3,fluidRow(column(12,prettyCheckboxGroup(label = "Seuils RAMSAR 1%",
                                                                                                 inputId = "RAMSAR",
@@ -297,7 +298,19 @@ ui2 <- navbarPage("Limicoles côtiers",
                                                              border: none;
                                                                            }"))),
                                         fluidRow(column(8,imageOutput("Roue")),
-                                                 column(4,imageOutput("Map")))
+                                                 column(4,imageOutput("Map"),style="margin:0 0 10px 0; padding:0;")),
+                                        fluidRow(column(4, offset = 2,downloadBttn("Dl_Roue",
+                                                                                   label = "Télécharger la roue",
+                                                                                   style = "jelly",
+                                                                                   size = "sm",
+                                                                                   block = T)),
+                                                 column(4,offset = 2,downloadBttn("Dl_Map",
+                                                                       label = "Télécharger la carte de distrib.",
+                                                                       style = "jelly",
+                                                                       size = "sm",
+                                                                       block = T))
+                                                 ),
+                                        hr()
                                 )
                                         
                              ))
@@ -624,7 +637,11 @@ data <- reactivePoll(60000, session,
       formatter("span",
                 style = x ~ formattable::style(  #On pointe vers la fonctin style de formattable car plotly possède aussi une fonction style et ça crée une ollision sinon
                   font.weight = ifelse(x >= seuil.national(), "bold", ""),
-                  background = ifelse(x >= seuil.inter(), "rgba(227,53,15,0.8)", ifelse(x >= seuil.national(), "rgba(17,156, 165,0.8)", "")),
+                  background = ifelse(x >= seuil.inter() & !is.na (seuil.inter()),              #premier test
+                                      "rgba(227,53,15,0.8)",                                    #couleur du background si premier test vrai (le 4ieme argument est la transparence)
+                                      ifelse(x >= seuil.national() & !is.na (seuil.inter()),    #deuxième test si premier test faux
+                                             "rgba(17,156, 165,0.8)",                           #couleur du backround si deuxième test vrai
+                                             "")),                                              #couleur du background si deux test faux
                   border.radius = "5px",      #Arrondi les coins du background
                   padding = "3px 7px 3px"     #Défini la taille du rectangle de background. 1ere valeur haut, 2ème valeur droite et gauche, troisième valeur bas
                 ))
@@ -799,11 +816,24 @@ data <- reactivePoll(60000, session,
   output$Map<-renderImage({
     filepath<-paste("Indicateurs/Resultats_",input$selection_dec,"/4. Cartes/Carte_",Abr_SF(),"_",Abr_esp(),"_",input$selection_dec,".png",sep="")
     list(src = filepath,
-         width = "auto",
-         height = "100%",
+         width = "100%",
+         height = "auto",
          alt = "Carte distribution nationale")
   },deleteFile = F)
   
+  output$Dl_Roue<-downloadHandler(
+    filename = function(){paste("Roue indicateur_",Abr_esp(),"_",input$selection_dec,"_",Abr_SF(),".png",sep="")}, # variable du nom
+    content = function(file) {
+      file.copy(paste("Indicateurs/Resultats_",input$selection_dec,"/3. ROUES/Roue_",Abr_SF(),"_",Abr_esp(),"_",input$selection_dec,".png",sep=""),
+                file)
+    })
+  
+  output$Dl_Map<-downloadHandler(
+    filename = function(){paste("Carte distribution_",Abr_esp(),"_",input$selection_dec,"_",Abr_SF(),".png",sep="")}, # variable du nom
+    content = function(file) {
+      file.copy(paste("Indicateurs/Resultats_",input$selection_dec,"/4. Cartes/Carte_",Abr_SF(),"_",Abr_esp(),"_",input$selection_dec,".png",sep=""),
+                file)
+    })
   
   #coupure des connections à la base de données à la fermeture de shiny
   session$onSessionEnded(close_connection)
