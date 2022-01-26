@@ -289,13 +289,15 @@ ui2 <- navbarPage("Limicoles côtiers",
                                                                                   size = "xs",
                                                                                   block = T))),
                                         fluidRow(column(12,htmlOutput("text_tendances"))),
-                                        tags$head(tags$style(HTML("#text_tendances{background-color: #e6b3b3;
+                                        tags$head(tags$style(HTML("#text_tendances{background-color: #bdbde5;
                                                              padding: 15px;
                                                              margin: 10px 10px 10px;
                                                              border-radius: 8px 8px 30px 30px;
                                                              text-align: justify;
                                                              border: none;
-                                                                           }")))
+                                                                           }"))),
+                                        fluidRow(column(8,imageOutput("Roue")),
+                                                 column(4,imageOutput("Map")))
                                 )
                                         
                              ))
@@ -776,7 +778,7 @@ data <- reactivePoll(60000, session,
   output$text_tendances<-renderText({
     paste(
       "<p><b>r :</b> tendance pour l'espèce et l'entité géographique sur la décennie sélectionnée. <em> Exemple : -0.07 [-0.01 ; -0.12] 
-      correspond à une tendance à la décroissance estimée à environ -7%, avec un intervalle de crédibilité de -1% à -12% </p>
+      correspond à une tendance à la décroissance estimée à environ -7%, avec un intervalle de crédibilité de -1% à -12%</em></p>
       <p><b>Proba (r > 0) :</b> correspond à la probabilité calculée que la tendance donnée soit effectivement supérieure à 0 (<em>respectivement inférieure</em>) lorsque que l'intervalle de
       crédibilité de la tendance recouvre 0. Si cette probabilité est de 100%, on considère que la population est statistiquement considérable comme en croissance (<em>resp. en décroissance</em>)</p>
       <p><b>Proba (r < r.SRM <em>ou r.nat</em>) :</b> correspond à la probabilité que la tendance <b>locale</b> soit effectivement inférieure (<em>resp. supérieure</em>)
@@ -785,6 +787,23 @@ data <- reactivePoll(60000, session,
       <b>n.SRM :</b> nombre de sites fonctionnels inclus dans le calcul de la tendances à l'échelle SRM <br>
       <b>n.nat :</b> nombre de sites fonctionnels inclus dans le calcul de la tendances à l'échelle nationale")
   })
+  
+  output$Roue<-renderImage({
+    filepath<-paste("Indicateurs/Resultats_",input$selection_dec,"/3. ROUES/Roue_",Abr_SF(),"_",Abr_esp(),"_",input$selection_dec,".png",sep="")
+    list(src = filepath,
+         width = "100%",
+         height = "auto",
+         alt = "Roue indicateur")
+  },deleteFile = F)
+  
+  output$Map<-renderImage({
+    filepath<-paste("Indicateurs/Resultats_",input$selection_dec,"/4. Cartes/Carte_",Abr_SF(),"_",Abr_esp(),"_",input$selection_dec,".png",sep="")
+    list(src = filepath,
+         width = "auto",
+         height = "100%",
+         alt = "Carte distribution nationale")
+  },deleteFile = F)
+  
   
   #coupure des connections à la base de données à la fermeture de shiny
   session$onSessionEnded(close_connection)
