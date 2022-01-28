@@ -360,7 +360,9 @@ data <- reactivePoll(60000, session,
       
     
     g <- ggplot(tgraph, aes(x =annee,y=Nb_sous_sites)) + 
-      geom_line()
+      geom_line(col='#6f6fab',size=.8) + 
+      labs(title = "Evolution du nombre de sites contributeurs depuis les début du réseau OPNL",
+           x = "Années") + theme_minimal()
 
     ggplotly(g)
   })
