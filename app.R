@@ -150,9 +150,11 @@ ui2 <- navbarPage("Limicoles côtiers",
                                     column(4,valueBoxOutput("obsBox",width = NULL))
                            ),
                            fluidRow(column(6,plotlyOutput("Evo_contributeurs")),
-                                    column(6,img(src="Carte_contrib.tif",
-                                                 width=567,
-                                                 height=394)))
+                                    column(6,img(src="Carte_contrib.png",
+                                                 width="100%",
+                                                 height="auto",
+                                                 style="margin: 1rem;"),align="center")
+                           )
                   ),
                   tabPanel("Analyse par SF",
                            fluidPage(sidebarLayout(
@@ -301,7 +303,7 @@ ui2 <- navbarPage("Limicoles côtiers",
                                                              border: none;
                                                                            }"))),
                                         fluidRow(column(8,imageOutput("Roue")),
-                                                 column(4,imageOutput("Map"),style="margin:0 0 10px 0; padding:0;")),
+                                                 column(4,imageOutput("Map"),style="margin:0 0 100px 0; padding:0;")),
                                         fluidRow(column(4, offset = 2,downloadBttn("Dl_Roue",
                                                                                    label = "Télécharger la roue",
                                                                                    style = "jelly",
@@ -716,7 +718,7 @@ data <- reactivePoll(60000, session,
   
   #Création du bouton pour télécharger le pdf complet
   output$DownloadIndic <- downloadHandler(
-    filename = function(){paste("Indics_LimiCot_TousTaxons_",input$selection_SF2,"_",input$selection_dec,".png",sep = "")}, # variable du nom
+    filename = function(){paste("Indics_LimiCot_TousTaxons_",input$selection_SF2,"_",input$selection_dec,".pdf",sep = "")}, # variable du nom
     content = function(file) {
                    file.copy(paste("Indicateurs/Resultats_",input$selection_dec,"/5. FICHES/Fiche complete_",Abr_SF(),"_",input$selection_dec,".pdf",sep=""),
                              file)
