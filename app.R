@@ -214,7 +214,16 @@ ui2 <- navbarPage("Limicoles côtiers",
                                                                    column(12,valueBoxOutput("SeuilInterBox",width = NULL))
                                                                   )
                                                         )
-                                                )
+                                                ),
+                                        hr(),
+                                        h4(strong("Effort de comptage l'échelle du site fonctionnel")),
+                                        p("Le graphique ci-dessous permet de mettre en regard les moyennes par mois obtenues à l'échelle de toute le site fonctionnel
+                                          avec l'effort de comptage. Il permet de notamment de visualiser les mois où peu de comptages ont été réalisés entre les deux années séléctionnées.
+                                          Il convient donc de prendre les moyennes calculées à partir de peu de comptages (< 4)"),
+                                        p(tags$b("Le nombre de site de suivis"),"évolue souvent au fil des années également. Ceci est dans la plupart des cas dû à un augmentation
+                                          de la couverture de comptage. Dans certains cas, cela peut être dû à un sous-site dont l'appelation est abandonné au profit d'une autre.",tags$br(),
+                                          "En cas de doute, se référer à l'onglet",tags$em("'Données'"),"en classant par date permettra de mieux visualiser l'évolution des sites de comptage"),
+                                        fluidRow(column(9,plotOutput("Effort_comptage")))
                                         ),
                                tabPanel("Données",
                                         fluidRow(column(12,dataTableOutput("table")))
@@ -362,7 +371,8 @@ data <- reactivePoll(60000, session,
     g <- ggplot(tgraph, aes(x =annee,y=Nb_sous_sites)) + 
       geom_line(col='#6f6fab',size=.8) + 
       labs(title = "Evolution du nombre de sites contributeurs depuis les début du réseau OPNL",
-           x = "Années") + theme_minimal()
+           x = "Années") + theme_minimal() +
+      theme(plot.title=element_text(hjust=0.5))
 
     ggplotly(g)
   })
@@ -677,7 +687,7 @@ data <- reactivePoll(60000, session,
   )
   
   
-  ##Création des valueBox à droit du tableau
+  ##Création des valueBox à droite du tableau
   nb_sup_seuil_nat <- reactive({
     length(which(data_graphe_pheno()$Moyenne_effectif>=seuil.national()))
   })
@@ -706,6 +716,65 @@ data <- reactivePoll(60000, session,
     )
   })
   
+  
+  
+  #Création du graphique pour l'effort de comptage :
+  
+  ploteffort<-reactive({
+    
+    t<-limicoles %>% filter(site_fonctionnel_nom == input$selection_SF2) %>%
+      filter(site %in% input$sous_sites) %>%
+      filter(annee >= input$range[1] & annee <= input$range[2]) #on filtre le dataset global selon les inputs utilisateurs
+    
+    t6<-table(t$annee,t$mois) %>%                                     #Table de contingence entre annee et mois : sort le nb de ligne pour chaque croisement
+      as.data.frame() %>%                                             #Remet le tableau en étendu
+      rename(Année=Var1,Mois=Var2,nrow=Freq) %>% arrange(Année) %>%   #On renomme les variables
+      mutate(Comptage = if_else(nrow>0,"oui","non"),                  #Si le nombre de ligne est sup à 0, c'est qu'il y a eu comptage
+             Année =as.numeric(as.character(Année)),
+             Mois=as.numeric(as.character(Mois)))
+    
+    ff<-function(x){length(unique(x))}
+    t7<-aggregate(site ~ annee + mois,
+                  data = t, 
+                  FUN = ff) %>%  #Permet de compter rapidement le nombre de sous-sites comptés pour chaque mois
+      arrange(annee) %>%
+      rename(Année=annee,Mois=mois)
+    
+    dat<-left_join(t6,t7)  #On joint les deux tableaux pour ajouter la colonne "site"
+    
+    
+    y_axis_break<-if(max(dat$Année)-min(dat$Année)<=5){     #Si peu d'amplitude entre les années bornes, on passe la séquence de l'axe à un pas de 1
+                   seq(min(dat$Année),max(dat$Année),1)
+                   }else{seq(min(dat$Année),max(dat$Année),2)}      #Pas de 2 sinon
+    
+    p<-ggplot(data = dat[which(dat$Comptage=="oui"),],aes(x=factor(Mois),y=Année))+
+      geom_point(aes(color=factor(site,ordered = T),size=factor(site,ordered = T)))+
+      scale_colour_manual(values=scales::seq_gradient_pal("deepskyblue",
+                                                          "dodgerblue4",
+                                                          "Lab")(seq(0,1,length.out=n_distinct(dat$site,na.rm = T))))+
+      geom_point(data = dat[which(dat$Comptage=="non"),],aes(x=factor(Mois),y=Année),shape=4,color="red",size=2,stroke=2)+
+      scale_x_discrete(breaks = seq(1,12,1),
+                       limits = factor(c(7,8,9,10,11,12,1,2,3,4,5,6)),
+                       labels = c("Jan.","Fév.","Mar.","Avr.","Mai","Juin","Juil.","Aout","Sept.","Oct.","Nov.","Déc."),
+                       position="top")+
+      scale_y_reverse(breaks = y_axis_break,
+                      minor_breaks = seq(min(dat$Année)+0.5,max(dat$Année)-0.5,1))+
+      labs(title = "Effort de comptage sur les sous-sites du site fonctionnel au cours du temps",
+           x="Mois",
+           color="Nb_sous site_comptés",
+           size="Nb_sous site_comptés")+
+      theme_minimal() +
+      theme(panel.grid.major = element_blank(),
+            axis.line = element_line(colour = "gray30", 
+                                     size = 1, linetype = "solid"),
+            #legend.justification =c(0.5,0.5),
+            legend.box.just = "center")
+    p
+  })
+  
+  output$Effort_comptage<-renderPlot({
+    ploteffort()
+  })
   
   #--------------------------------------------------------------------------#
   ################### Panel indicateurs limicoles ############################
