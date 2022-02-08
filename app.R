@@ -227,7 +227,9 @@ ui2 <- navbarPage("Limicoles côtiers",
                                         fluidRow(column(9,plotOutput("Effort_comptage")))
                                         ),
                                tabPanel("Données",
-                                        fluidRow(column(12,dataTableOutput("table")))
+                                        p("Cet onglet vise à permettre à l'utilisateur de consulter les données brutes de comptages issues de la base.",tags$br(),
+                                          "La gestion des droits d'accès aux données des différents contributeurs de l'OPNL n'étant pas encore définie, l'accès à ces données n'est pour l'instant pas disponible")
+                                        #fluidRow(column(12,dataTableOutput("table")))
                                         ),
                                tabPanel("Indicateurs",
                                         h3(strong("Indicateurs d'état des populations de limicoles en janvier")),
