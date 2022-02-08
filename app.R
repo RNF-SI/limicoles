@@ -223,6 +223,7 @@ ui2 <- navbarPage("Limicoles côtiers",
                                         p(tags$b("Le nombre de site de suivis"),"évolue souvent au fil des années également. Ceci est dans la plupart des cas dû à un augmentation
                                           de la couverture de comptage. Dans certains cas, cela peut être dû à un sous-site dont l'appelation est abandonné au profit d'une autre.",tags$br(),
                                           "En cas de doute, se référer à l'onglet",tags$em("'Données'"),"en classant par date permettra de mieux visualiser l'évolution des sites de comptage"),
+                                        p(tags$b("Sur certains sites, lorsque beaucoup de comptages (voire tous) manquent sur une période, il est probable que le site n'était pas encore contributeur de l'OPNL sur la période")),
                                         fluidRow(column(9,plotOutput("Effort_comptage")))
                                         ),
                                tabPanel("Données",
@@ -759,16 +760,19 @@ data <- reactivePoll(60000, session,
                        position="top")+
       scale_y_reverse(breaks = y_axis_break,
                       minor_breaks = seq(min(dat$Année)+0.5,max(dat$Année)-0.5,1))+
-      labs(title = "Effort de comptage sur les sous-sites du site fonctionnel au cours du temps",
-           x="Mois",
+      labs(x="Mois",
            color="Nb_sous site_comptés",
            size="Nb_sous site_comptés")+
+      guides(color = guide_legend(title.position = "top"),
+             size = guide_legend(title.position = "top"))+
       theme_minimal() +
       theme(panel.grid.major = element_blank(),
             axis.line = element_line(colour = "gray30", 
                                      size = 1, linetype = "solid"),
-            #legend.justification =c(0.5,0.5),
+            legend.title.align = 0.5,
+            legend.direction = "vertical",
             legend.box.just = "center")
+    
     p
   })
   
