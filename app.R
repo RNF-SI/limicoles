@@ -156,7 +156,7 @@ ui2 <- navbarPage("Limicoles côtiers",
                                                  style="margin: 1rem;"),align="center")
                            )
                   ),
-                  tabPanel("Analyse par SF",
+                  tabPanel("Analyse par site-fonctionnel",
                            fluidPage(sidebarLayout(
                              sidebarPanel(
                                selectInput(label = "Sélectionner votre site fonctionnel d'intérêt",
@@ -371,13 +371,20 @@ data <- reactivePoll(60000, session,
       as.data.frame()
       
     
-    g <- ggplot(tgraph, aes(x =annee,y=Nb_sous_sites)) + 
+    g <- ggplot(tgraph, aes(x =annee,
+                            y=Nb_sous_sites)) + 
       geom_line(col='#6f6fab',size=.8) + 
       labs(title = "Evolution du nombre de sites contributeurs depuis les début du réseau OPNL",
-           x = "Années") + theme_minimal() +
-      theme(plot.title=element_text(hjust=0.5))
+           x = "Années",
+           y = "Nombre de sous-sites") + theme_minimal() +
+      theme(plot.title=element_text(hjust=0))
 
-    ggplotly(g)
+    ggplotly(g)%>% config(displayModeBar = "static", 
+                          displaylogo = FALSE, 
+                          modeBarButtonsToRemove = list("sendDataToCloud", "toImage", "autoScale2d", "resetScale2d", 
+                                                        "hoverClosestCartesian", "hoverCompareCartesian", "select2d", 
+                                                        "lasso2d", "zoomIn2d", "zoomOut2d", "toggleSpikelines")
+    )
   })
   
   nb_sites <- reactive({
@@ -388,7 +395,7 @@ data <- reactivePoll(60000, session,
   
   output$soussiteBox <- renderValueBox({
     valueBox(
-      nb_sites(), "Sous-sites fonctionnels", icon = icon("map-marked-alt", lib = "font-awesome"),
+      nb_sites(), "Sous-sites fonctionnels ont déjà contribué à notre réseau", icon = icon("map-marked-alt", lib = "font-awesome"),
       color = "green",width = 4
     )
   })
@@ -401,7 +408,7 @@ data <- reactivePoll(60000, session,
   
   output$visitBox <- renderValueBox({
     valueBox(
-      nb_visites(), "Visites", icon = icon("binoculars", lib = "font-awesome"),
+      nb_visites(), "Comptages mensuels ont été réalisés depuis 2000", icon = icon("binoculars", lib = "font-awesome"),
       color = "purple"
     )
   })
@@ -409,12 +416,12 @@ data <- reactivePoll(60000, session,
   nb_observations <- reactive({
     #res <- dplyr::filter(data(), site_fonctionnel_nom %in% input$selection_SF)
     #res <- dplyr::filter(res, cycle %in% input$selection_cycles)
-    nrow(limicoles)
+    sum(limicoles$effectif)
   })
   
   output$obsBox <- renderValueBox({
     valueBox(
-      nb_observations(), "Observations", icon = icon("kiwi-bird", lib = "font-awesome"),
+      nb_observations(), "Oiseaux ont été comptés", icon = icon("kiwi-bird", lib = "font-awesome"),
       color = "red"
     )
   })
