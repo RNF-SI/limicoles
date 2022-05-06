@@ -74,7 +74,7 @@ ui2 <- navbarPage("Limicoles côtiers",
                     useShinydashboard()
                   ),
                   
-                  tabPanel("Analyse générale",
+                  tabPanel("Présentation générale",
                            #fluidRow(
                            #  column(8,
                            #         pickerInput(
@@ -217,11 +217,11 @@ ui2 <- navbarPage("Limicoles côtiers",
                                                 ),
                                         hr(),
                                         h4(strong("Effort de comptage l'échelle du site fonctionnel")),
-                                        p("Le graphique ci-dessous permet de mettre en regard les moyennes par mois obtenues à l'échelle de toute le site fonctionnel
-                                          avec l'effort de comptage. Il permet de notamment de visualiser les mois où peu de comptages ont été réalisés entre les deux années séléctionnées.
-                                          Il convient donc de prendre les moyennes calculées à partir de peu de comptages (< 4)"),
-                                        p(tags$b("Le nombre de site de suivis"),"évolue souvent au fil des années également. Ceci est dans la plupart des cas dû à un augmentation
-                                          de la couverture de comptage. Dans certains cas, cela peut être dû à un sous-site dont l'appelation est abandonné au profit d'une autre.",tags$br(),
+                                        p("Le graphique ci-dessous permet de mettre en regard les moyennes par mois obtenues à l'échelle du site fonctionnel
+                                          avec l'effort de comptage. Il permet de notamment de visualiser les mois où peu de comptages ont pu être réalisés entre les deux années séléctionnées.
+                                          Il convient donc de prendre les moyennes calculées à partir de peu de comptages (< 4) avec précaution"),
+                                        p(tags$b("Le nombre de site de suivis"),"évolue souvent au fil des années également. Ceci est, dans la plupart des cas, dû à une augmentation
+                                          de la couverture de comptage. Dans certains cas, cela peut être dû à un sous-site dont l'appelation a été abandonnée au profit d'une autre.",tags$br(),
                                           "En cas de doute, se référer à l'onglet",tags$em("'Données'"),"en classant par date permettra de mieux visualiser l'évolution des sites de comptage"),
                                         p(tags$b("Sur certains sites, lorsque beaucoup de comptages (voire tous) manquent sur une période, il est probable que le site n'était pas encore contributeur de l'OPNL sur la période")),
                                         fluidRow(column(9,plotOutput("Effort_comptage")))
@@ -416,7 +416,7 @@ data <- reactivePoll(60000, session,
   nb_observations <- reactive({
     #res <- dplyr::filter(data(), site_fonctionnel_nom %in% input$selection_SF)
     #res <- dplyr::filter(res, cycle %in% input$selection_cycles)
-    sum(limicoles$effectif)
+    sum(limicoles$effectif,na.rm = T)
   })
   
   output$obsBox <- renderValueBox({
