@@ -421,7 +421,7 @@ data <- reactivePoll(60000, session,
   
   output$obsBox <- renderValueBox({
     valueBox(
-      nb_observations(), "Oiseaux ont été comptés", icon = icon("kiwi-bird", lib = "font-awesome"),
+      nb_observations(), "Oiseaux ont été comptés depuis les début de l'OPNL", icon = icon("kiwi-bird", lib = "font-awesome"),
       color = "red"
     )
   })
@@ -886,7 +886,7 @@ data <- reactivePoll(60000, session,
   output$text_tendances<-renderText({
     paste(
       "<p><b>r :</b> tendance pour l'espèce et l'entité géographique sur la décennie sélectionnée. <em> Exemple : -0.07 [-0.01 ; -0.12] 
-      correspond à une tendance à la décroissance estimée à environ -7%, avec un intervalle de crédibilité de -1% à -12%</em></p>
+      correspond à une tendance à la décroissance estimée à environ -7%/an en moyenne, avec un intervalle de crédibilité de -1% à -12%/an</em></p>
       <p><b>Proba (r > 0) :</b> correspond à la probabilité calculée que la tendance donnée soit effectivement supérieure à 0 (<em>respectivement inférieure</em>) lorsque que l'intervalle de
       crédibilité de la tendance recouvre 0. Si cette probabilité est de 100%, on considère que la population est statistiquement considérable comme en croissance (<em>resp. en décroissance</em>)</p>
       <p><b>Proba (r < r.SRM <em>ou r.nat</em>) :</b> correspond à la probabilité que la tendance <b>locale</b> soit effectivement inférieure (<em>resp. supérieure</em>)
